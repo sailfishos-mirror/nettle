@@ -917,6 +917,9 @@ test_aead_message (const struct nettle_aead_message *aead,
 {
   void *ctx = xalloc (aead->context_size);
   uint8_t *buf = xalloc (cipher->length + 1);
+  uint8_t *copy = xalloc (cipher->length);
+
+  static const uint8_t nul = 0;
   int res;
 
   ASSERT (key->length == aead->key_size);
@@ -943,26 +946,7 @@ test_aead_message (const struct nettle_aead_message *aead,
       FAIL();
     }
   aead->set_decrypt_key (ctx, key->data);
-#if 0
-  /* First try in-place decrypt. FIXME: Not supported for SIV. */
-  res = aead->decrypt (ctx,
-		       nonce->length, nonce->data,
-		       adata->length, adata->data,
-		       clear->length, buf, buf);
-  if (!res)
-    {
-      fprintf (stderr, "in-place decrypting valid ciphertext failed:\n  ");
-      tstring_print_hex (cipher);
-    }
-  if (!MEMEQ (clear->length, clear->data, buf))
-    {
-      fprintf(stderr, "aead->decrypt (in place message) failed:\n  got: ");
-      print_hex (clear->length, buf);
-      fprintf (stderr, "  exp: ");
-      tstring_print_hex (clear);
-      FAIL();
-    }
-#endif
+
   memset (buf, 0xae, clear->length + 1);
 
   res = aead->decrypt (ctx,
@@ -993,39 +977,84 @@ test_aead_message (const struct nettle_aead_message *aead,
       fprintf (stderr, "Invalid message (truncated) not rejected\n");
       FAIL();
     }
-  memcpy (buf, cipher->data, cipher->length);
-  buf[0] ^= 4;
+  memcpy (copy, cipher->data, cipher->length);
+  copy[0] ^= 4;
   if (aead->decrypt (ctx,
 		     nonce->length, nonce->data,
 		     adata->length, adata->data,
-		     clear->length, buf, buf))
+		     clear->length, buf, copy))
     {
       fprintf (stderr, "Invalid message (first byte modified) not rejected\n");
       FAIL();
     }
 
-  memcpy (buf, cipher->data, cipher->length);
-  buf[cipher->length - 1] ^= 4;
+  memcpy (copy, cipher->data, cipher->length);
+  copy[cipher->length - 1] ^= 4;
   if (aead->decrypt (ctx,
 		     nonce->length, nonce->data,
 		     adata->length, adata->data,
-		     clear->length, buf, buf))
+		     clear->length, buf, copy))
     {
       fprintf (stderr, "Invalid message (last byte modified) not rejected\n");
       FAIL();
     }
 
-  memcpy (buf, adata->data, adata->length);
-  if (adata->length == 0)
-    buf[0] = 0;
   if (aead->decrypt (ctx,
 		     nonce->length, nonce->data,
-		     adata->length ? adata->length /* - 1 */ : 1, buf,
+		     adata->length > 0 ? adata->length - 1 : 1,
+		     adata->length > 0 ? adata->data : &nul,
 		     clear->length, buf, cipher->data))
     {
       fprintf (stderr, "Invalid adata not rejected\n");
       FAIL();
     }
+
+  /* Test in-place operation. NOTE: Not supported for SIV-CMAC. */
+  if (aead->supports_inplace)
+    {
+      aead->set_encrypt_key (ctx, key->data);
+      buf[cipher->length] = 0xae;
+
+      memcpy (buf, clear->data, clear->length);
+      aead->encrypt (ctx,
+		     nonce->length, nonce->data,
+		     adata->length, adata->data,
+		     cipher->length, buf, buf);
+      if (!MEMEQ (cipher->length, cipher->data, buf))
+	{
+	  fprintf(stderr, "aead->encrypt (in-place message) failed:\n  got: ");
+	  print_hex (cipher->length, buf);
+	  fprintf (stderr, "  exp: ");
+	  tstring_print_hex (cipher);
+	  FAIL();
+	}
+      if (buf[cipher->length] != 0xae)
+	{
+	  fprintf (stderr, "aead->encrypt (in-place message) wrote too much.\n ");
+	  FAIL();
+	}
+
+      res = aead->decrypt (ctx,
+			   nonce->length, nonce->data,
+			   adata->length, adata->data,
+			   clear->length, buf, buf);
+      if (!res)
+	{
+	  fprintf (stderr, "in-place decrypting valid ciphertext failed:\n  ");
+	  tstring_print_hex (cipher);
+	}
+      if (!MEMEQ (clear->length, clear->data, buf))
+	{
+	  fprintf(stderr, "aead->decrypt (in-place message) failed:\n  got: ");
+	  print_hex (clear->length, buf);
+	  fprintf (stderr, "  exp: ");
+	  tstring_print_hex (clear);
+	  FAIL();
+	}
+    }
+  free (ctx);
+  free (buf);
+  free (copy);
 }
 
 void

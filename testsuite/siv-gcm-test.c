@@ -48,6 +48,7 @@ siv_gcm_aes128 = {
   sizeof(struct aes128_ctx),
   AES128_KEY_SIZE,
   SIV_GCM_DIGEST_SIZE,
+  1, /* Supports in-place operation. */
   (nettle_set_key_func*) aes128_set_encrypt_key,
   (nettle_set_key_func*) aes128_set_encrypt_key,
   (nettle_encrypt_message_func*) siv_gcm_aes128_encrypt_message,
@@ -60,6 +61,7 @@ siv_gcm_aes256 = {
   sizeof(struct aes256_ctx),
   AES256_KEY_SIZE,
   SIV_GCM_DIGEST_SIZE,
+  1, /* Supports in-place operation. */
   (nettle_set_key_func*) aes256_set_encrypt_key,
   (nettle_set_key_func*) aes256_set_encrypt_key,
   (nettle_encrypt_message_func*) siv_gcm_aes256_encrypt_message,

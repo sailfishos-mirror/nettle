@@ -97,6 +97,7 @@ struct nettle_aead_message
   unsigned context_size;
   unsigned key_size;
   unsigned digest_size;
+  int supports_inplace;
   nettle_set_key_func *set_encrypt_key;
   nettle_set_key_func *set_decrypt_key;
   nettle_encrypt_message_func *encrypt;

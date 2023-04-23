@@ -122,7 +122,8 @@ siv_cmac_encrypt_message (const struct cmac128_key *cmac_key,
 {
   union nettle_block16 siv;
   size_t slength;
-
+  /* In-place operation not supported. */
+  assert (dst != src);
   assert (clength >= SIV_DIGEST_SIZE);
   slength = clength - SIV_DIGEST_SIZE;
 
@@ -148,6 +149,9 @@ siv_cmac_decrypt_message (const struct cmac128_key *cmac_key,
 {
   union nettle_block16 siv;
   union nettle_block16 ctr;
+
+  /* In-place operation not supported. */
+  assert (dst != src);
 
   memcpy (ctr.b, src, SIV_DIGEST_SIZE);
   ctr.b[8] &= ~0x80;
