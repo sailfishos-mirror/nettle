@@ -84,6 +84,7 @@ Reference
 * Keyed hash functions::
 * Key derivation functions::
 * Public-key algorithms::
+* Key-Encapsulation mechanisms::
 * Randomness::
 * ASCII encoding::
 * Miscellaneous functions::
@@ -376,6 +377,7 @@ This chapter describes all the Nettle functions, grouped by family.
 * Keyed hash functions::
 * Key derivation functions::
 * Public-key algorithms::
+* Key-Encapsulation mechanisms::
 * Randomness::
 * ASCII encoding::
 * Miscellaneous functions::
@@ -5891,6 +5893,53 @@ signature is @code{SLH_DSA_128S_SIGNATURE_SIZE} or
 @deftypefunx int slh_dsa_sha2_128f_verify (const uint8_t *@var{pub}, size_t @var{length}, const uint8_t *@var{msg}, const uint8_t *@var{signature})
 Verifies a message using the provided public key. Returns 1 if the
 signature is valid, otherwise 0.
+@end deftypefun
+
+@node Key-Encapsulation mechanisms
+@section Key-Encapsulation mechanisms
+
+@cindex Key-Encapsulation mechanisms
+@cindex KEM
+
+Key-Encapsulation mechanisms allows a sender to take a public key as
+input and produce (encapsulate) a session key wrapped in ciphertext, and
+the receiver to extract (decapsulate) the session key using its private
+key.
+
+Nettle supports the Streamlined NTRU Prime algorithm @code{sntrup761}.
+
+Nettle defines sntrup761 in @file{<nettle/sntrup761.h>}.
+
+@defvr Constant SNTRUP761_SECRETKEY_SIZE
+The size (1763 bytes) of the sntrup651 secret key.
+@end defvr
+
+@defvr Constant SNTRUP761_PUBLICKEY_SIZE
+The size (1158 bytes) of the sntrup651 secret key.
+@end defvr
+
+@defvr Constant SNTRUP761_CIPHERTEXT_SIZE
+The size (1039 bytes) of the sntrup651 ciphertext.
+@end defvr
+
+@defvr Constant SNTRUP761_SIZE
+The size (32 bytes) of the sntrup651 output key.
+@end defvr
+
+@deftypefun void sntrup761_keypair (uint8_t *@var{pk}, uint8_t *@var{sk}, void *@var{random_ctx}, nettle_random_func *@var{random});
+Generate a sntrup761 public key @var{pk} and private key @var{sk}, using
+randomness-generator @var{random} with context @var{random_ctx}.
+@end deftypefun
+
+@deftypefun void sntrup761_enc (uint8_t *@var{c}, uint8_t *@var{k}, const uint8_t *@var{pk}, void *@var{random_ctx}, nettle_random_func *@var{random});
+Generate a session key @var{k} and encapsulate it into ciphertext
+@var{c} for the recipient with public-key @var{pk}, using
+randomness-generator @var{random} with context @var{random_ctx}.
+@end deftypefun
+
+@deftypefun void sntrup761_dec (uint8_t *@var{k}, const uint8_t *@var{c}, const uint8_t *@var{sk});
+Decapsulate session key @var{k} from ciphertext @var{c} using the
+private key @var{sk}.
 @end deftypefun
 
 @node Randomness
