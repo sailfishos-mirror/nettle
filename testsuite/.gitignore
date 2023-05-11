@@ -115,6 +115,7 @@
 /shake256-test
 /x86-ibt-test
 /drbg-ctr-aes256-test
+/sntrup761-test
 
 /test.in
 /test1.out
