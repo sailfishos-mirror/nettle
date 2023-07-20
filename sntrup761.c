@@ -55,24 +55,20 @@ crypto_hash_sha512 (unsigned char *out, const unsigned char *in, int inlen)
   sha512_digest (&ctx, out);
 }
 
-/* from supercop-20201130/crypto_sort/int32/portable4/int32_minmax.inc */
-#define int32_MINMAX(a,b) \
+#define uint32_MINMAX(a,b) \
 do { \
-  int64_t ab = (int64_t)b ^ (int64_t)a; \
-  int64_t c = (int64_t)b - (int64_t)a; \
-  c ^= ab & (c ^ b); \
-  c >>= 31; \
-  c &= ab; \
-  a ^= c; \
-  b ^= c; \
+  uint64_t d = (uint64_t)b - (uint64_t)a; \
+  uint32_t masked_d = (d >> 32) & d; \
+  a += masked_d; \
+  b -= masked_d; \
 } while(0)
 
-/* from supercop-20201130/crypto_sort/int32/portable4/sort.c */
+/* Based on supercop-20201130/crypto_sort/int32/portable4/sort.c, but
+   using uint32_t rather than int32_t. */
 static void
-crypto_sort_int32 (void *array, long long n)
+crypto_sort_uint32 (uint32_t *x, long long n)
 {
   long long top, p, q, r, i, j;
-  int32_t *x = array;
 
   if (n < 2)
     return;
@@ -86,11 +82,11 @@ crypto_sort_int32 (void *array, long long n)
       while (i + 2 * p <= n)
 	{
 	  for (j = i; j < i + p; ++j)
-	    int32_MINMAX (x[j], x[j + p]);
+	    uint32_MINMAX (x[j], x[j + p]);
 	  i += 2 * p;
 	}
       for (j = i; j < n - p; ++j)
-	int32_MINMAX (x[j], x[j + p]);
+	uint32_MINMAX (x[j], x[j + p]);
 
       i = 0;
       j = 0;
@@ -101,9 +97,9 @@ crypto_sort_int32 (void *array, long long n)
 	      {
 		if (j == n - q)
 		  goto done;
-		int32_t a = x[j + p];
+		uint32_t a = x[j + p];
 		for (r = q; r > p; r >>= 1)
-		  int32_MINMAX (a, x[j + r]);
+		  uint32_MINMAX (a, x[j + r]);
 		x[j + p] = a;
 		++j;
 		if (j == i + p)
@@ -116,9 +112,9 @@ crypto_sort_int32 (void *array, long long n)
 	    {
 	      for (j = i; j < i + p; ++j)
 		{
-		  int32_t a = x[j + p];
+		  uint32_t a = x[j + p];
 		  for (r = q; r > p; r >>= 1)
-		    int32_MINMAX (a, x[j + r]);
+		    uint32_MINMAX (a, x[j + r]);
 		  x[j + p] = a;
 		}
 	      i += 2 * p;
@@ -127,9 +123,9 @@ crypto_sort_int32 (void *array, long long n)
 	  j = i;
 	  while (j < n - q)
 	    {
-	      int32_t a = x[j + p];
+	      uint32_t a = x[j + p];
 	      for (r = q; r > p; r >>= 1)
-		int32_MINMAX (a, x[j + r]);
+		uint32_MINMAX (a, x[j + r]);
 	      x[j + p] = a;
 	      ++j;
 	    }
@@ -137,23 +133,6 @@ crypto_sort_int32 (void *array, long long n)
 	done:;
 	}
     }
-}
-
-/* from supercop-20201130/crypto_sort/uint32/useint32/sort.c */
-
-/* can save time by vectorizing xor loops */
-/* can save time by integrating xor loops with int32_sort */
-
-static void
-crypto_sort_uint32 (void *array, long long n)
-{
-  uint32_t *x = array;
-  long long j;
-  for (j = 0; j < n; ++j)
-    x[j] ^= 0x80000000;
-  crypto_sort_int32 (array, n);
-  for (j = 0; j < n; ++j)
-    x[j] ^= 0x80000000;
 }
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/uint32.c */
