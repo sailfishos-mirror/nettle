@@ -52,7 +52,7 @@ dsa_sha1_verify(const struct dsa_public_key *key,
 		const struct dsa_signature *signature)
 {
   uint8_t digest[SHA1_DIGEST_SIZE];
-  sha1_digest(hash, sizeof(digest), digest);
+  sha1_digest(hash, digest);
 
   return dsa_verify((const struct dsa_params *) key, key->y,
 		    sizeof(digest), digest, signature);

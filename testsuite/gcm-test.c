@@ -11,13 +11,13 @@ test_gcm_hash (const struct tstring *msg, const struct tstring *ref)
 {
   struct gcm_aes128_ctx ctx;
   const uint8_t z16[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-  uint8_t digest[16];
+  uint8_t digest[GCM_DIGEST_SIZE];
 
   ASSERT (ref->length == sizeof(digest));
   gcm_aes128_set_key (&ctx, z16);
   gcm_aes128_set_iv (&ctx, 16, z16);
   gcm_aes128_update (&ctx, msg->length, msg->data);
-  gcm_aes128_digest (&ctx, sizeof(digest), digest);
+  gcm_aes128_digest (&ctx, digest);
   if (!MEMEQ (ref->length, ref->data, digest))
     {
       fprintf (stderr, "gcm_hash failed, msg: %s\nOutput: ", msg->data);
@@ -85,6 +85,11 @@ gcm_unified_aes128_set_iv (void *ctx, const uint8_t *iv)
 {
   gcm_aes_set_iv (ctx, GCM_IV_SIZE, iv);
 }
+static void
+gcm_unified_aes128_digest (void *ctx, uint8_t *digest)
+{
+  gcm_aes_digest (ctx, GCM_DIGEST_SIZE, digest);
+}
 static const struct nettle_aead
 nettle_gcm_unified_aes128 = {
   "gcm-aes128",
@@ -97,7 +102,7 @@ nettle_gcm_unified_aes128 = {
   (nettle_hash_update_func *) gcm_aes_update,
   (nettle_crypt_func *) gcm_aes_encrypt,
   (nettle_crypt_func *) gcm_aes_decrypt,
-  (nettle_hash_digest_func *) gcm_aes_digest
+  (nettle_hash_digest_func *) gcm_unified_aes128_digest
 };
 
 /* Hack that uses a 16-byte nonce, a 12-byte standard GCM nonce and an

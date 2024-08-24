@@ -57,7 +57,7 @@ dsa_sha256_sign(const struct dsa_public_key *pub,
 		struct dsa_signature *signature)
 {
   uint8_t digest[SHA256_DIGEST_SIZE];
-  sha256_digest(hash, sizeof(digest), digest);
+  sha256_digest(hash, digest);
 
   return dsa_sign((const struct dsa_params *) pub, key->x,
 		  random_ctx, random,

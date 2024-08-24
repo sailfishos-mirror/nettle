@@ -35,6 +35,8 @@
 # include "config.h"
 #endif
 
+#include <string.h>
+
 /* This file implements and uses deprecated functions */
 #define _NETTLE_ATTRIBUTE_DEPRECATED
 
@@ -79,5 +81,7 @@ void
 gcm_aes_digest(struct gcm_aes_ctx *ctx,
 	       size_t length, uint8_t *digest)
 {
-  GCM_DIGEST(ctx, aes_encrypt, length, digest);
+  uint8_t buf[GCM_DIGEST_SIZE];
+  GCM_DIGEST(ctx, aes_encrypt, buf);
+  memcpy (digest, buf, length);
 }

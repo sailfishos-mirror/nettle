@@ -52,5 +52,5 @@ MD5Update(MD5_CTX *ctx, const unsigned char *data, unsigned int length)
 void
 MD5Final(unsigned char *out, MD5_CTX *ctx)
 {
-  md5_digest(ctx, MD5_DIGEST_SIZE, out);
+  md5_digest(ctx, out);
 }

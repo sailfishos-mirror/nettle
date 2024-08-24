@@ -95,7 +95,7 @@ rsa_keypair_to_openpgp(struct nettle_buffer *buffer,
 	      buffer->contents + key_start);
 
   signature_hash = key_hash;
-  sha1_digest(&key_hash, sizeof(fingerprint), fingerprint);
+  sha1_digest(&key_hash, fingerprint);
 
   sha1_update(&signature_hash,
 	      buffer->size - userid_start,

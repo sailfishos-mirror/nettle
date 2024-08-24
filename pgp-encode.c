@@ -282,11 +282,12 @@ pgp_put_rsa_sha1_signature(struct nettle_buffer *buffer,
 
   {
     struct sha1_ctx hcopy = *hash;
+    uint8_t digest[SHA1_DIGEST_SIZE];
     uint8_t *p = nettle_buffer_space(buffer, 2);
     if (!p)
       return 0;
-    
-    sha1_digest(&hcopy, 2, p);
+    sha1_digest(&hcopy, digest);
+    memcpy(p, digest, 2);
   }
 
   /* One "sub-packet" field with the issuer keyid */
