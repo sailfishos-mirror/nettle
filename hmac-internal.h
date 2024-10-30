@@ -46,10 +46,10 @@ _nettle_hmac_set_key (size_t state_size, void *outer, void *inner,
 		      const struct nettle_hash *hash,
 		      size_t key_size, const uint8_t *key);
 
-#define _NETTLE_HMAC_DIGEST(outer, inner, ctx, f, length, digest) do { \
-    memcpy ((ctx), (outer), sizeof (outer));			\
+#define _NETTLE_HMAC_DIGEST(outer, inner, ctx, f, length, digest) do {	\
+    memcpy ((ctx), (outer), sizeof (outer));				\
     f ((ctx), (length), (digest));					\
-    memcpy ((ctx), (inner), sizeof ((inner)));			\
+    memcpy ((ctx), (inner), sizeof ((inner)));				\
   } while (0)
 
 #endif /* NETTLE_HMAC_INTERNAL_H_INCLUDED */
