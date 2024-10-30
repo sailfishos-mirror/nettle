@@ -1299,7 +1299,7 @@ test_mac(const struct nettle_mac *mac,
 
   if (!MEMEQ (digest->length, digest->data, hash))
     {
-      fprintf (stderr, "test_mac failed, msg: ");
+      fprintf (stderr, "test_mac %s failed, msg: ", mac->name);
       print_hex (msg->length, msg->data);
       fprintf(stderr, "Output:");
       print_hex (mac->digest_size, hash);
@@ -1314,7 +1314,7 @@ test_mac(const struct nettle_mac *mac,
   mac->digest (ctx, digest->length, hash);
   if (!MEMEQ (digest->length, digest->data, hash))
     {
-      fprintf (stderr, "test_mac: failed on re-use, msg: ");
+      fprintf (stderr, "test_mac %s failed on re-use, msg: ", mac->name);
       print_hex (msg->length, msg->data);
       fprintf(stderr, "Output:");
       print_hex (mac->digest_size, hash);
@@ -1330,7 +1330,7 @@ test_mac(const struct nettle_mac *mac,
   mac->digest (ctx, digest->length, hash);
   if (!MEMEQ (digest->length, digest->data, hash))
     {
-      fprintf (stderr, "test_mac failed on byte-by-byte, msg: ");
+      fprintf (stderr, "test_mac %s failed on byte-by-byte, msg: ", mac->name);
       print_hex (msg->length, msg->data);
       fprintf(stderr, "Output:");
       print_hex (16, hash);
