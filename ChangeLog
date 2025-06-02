@@ -1,3 +1,8 @@
+2025-06-02  Niels Möller  <nisse@lysator.liu.se>
+
+	* ctr.c (ctr_fill16) [!WORDS_BIGENDIAN]: Use nettle_bswap64.
+	(ctr_crypt): For block size 16, always use _nettle_ctr_crypt16.
+
 2025-05-13  Niels Möller  <nisse@lysator.liu.se>
 
 	Reduce size of sha3 context size to 216 bytes.
