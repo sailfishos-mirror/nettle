@@ -38,8 +38,6 @@
 #include "slh-dsa.h"
 #include "slh-dsa-internal.h"
 
-#include "sha3.h"
-
 #define SLH_DSA_M 34
 
 #define XMSS_H 3
@@ -49,8 +47,7 @@ slh_dsa_shake_128f_root (const uint8_t *public_seed, const uint8_t *private_seed
 			 uint8_t *root)
 {
   uint8_t scratch[(XMSS_H + 1)*_SLH_DSA_128_SIZE];
-  struct sha3_ctx ha, hb;
-  _xmss_gen (&_slh_hash_shake, &ha, &hb, public_seed, private_seed,
+  _xmss_gen (&_slh_hash_shake, public_seed, private_seed,
 	     &_slh_dsa_128f_params.xmss, scratch, root);
 }
 
@@ -70,12 +67,9 @@ slh_dsa_shake_128f_sign (const uint8_t *pub, const uint8_t *priv,
 			 uint8_t *signature)
 {
   uint8_t digest[SLH_DSA_M];
-  struct sha3_ctx ha, hb;
-
   _slh_shake_randomizer (pub, priv + _SLH_DSA_128_SIZE, length, msg, signature);
   _slh_shake_msg_digest (signature, pub, length, msg, SLH_DSA_M, digest);
-  _slh_dsa_sign (&_slh_dsa_128f_params,
-		 &_slh_hash_shake, &ha, &hb,
+  _slh_dsa_sign (&_slh_dsa_128f_params, &_slh_hash_shake,
 		 pub, priv, digest,
 		 signature + _SLH_DSA_128_SIZE);
 }
@@ -86,11 +80,8 @@ slh_dsa_shake_128f_verify (const uint8_t *pub,
 			   const uint8_t *signature)
 {
   uint8_t digest[SLH_DSA_M];
-  struct sha3_ctx ha, hb;
-
   _slh_shake_msg_digest (signature, pub, length, msg, SLH_DSA_M,digest);
-  return _slh_dsa_verify (&_slh_dsa_128f_params,
-			  &_slh_hash_shake, &ha, &hb,
+  return _slh_dsa_verify (&_slh_dsa_128f_params, &_slh_hash_shake,
 			  pub, digest,
 			  signature + _SLH_DSA_128_SIZE);
 }
