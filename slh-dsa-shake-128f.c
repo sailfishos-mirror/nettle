@@ -67,11 +67,11 @@ slh_dsa_shake_128f_sign (const uint8_t *pub, const uint8_t *priv,
 			 uint8_t *signature)
 {
   uint8_t digest[SLH_DSA_M];
-  _slh_shake_randomizer (pub, priv + _SLH_DSA_128_SIZE, length, msg, signature);
-  _slh_shake_msg_digest (signature, pub, length, msg, SLH_DSA_M, digest);
+  _slh_dsa_pure_rdigest (&_slh_hash_shake,
+			 pub, priv + _SLH_DSA_128_SIZE, length, msg,
+			 signature, sizeof (digest), digest);
   _slh_dsa_sign (&_slh_dsa_128f_params, &_slh_hash_shake,
-		 pub, priv, digest,
-		 signature + _SLH_DSA_128_SIZE);
+		 pub, priv, digest, signature + _SLH_DSA_128_SIZE);
 }
 
 int
@@ -80,8 +80,8 @@ slh_dsa_shake_128f_verify (const uint8_t *pub,
 			   const uint8_t *signature)
 {
   uint8_t digest[SLH_DSA_M];
-  _slh_shake_msg_digest (signature, pub, length, msg, SLH_DSA_M,digest);
+  _slh_dsa_pure_digest (&_slh_hash_shake,
+			pub, length, msg, signature, sizeof (digest), digest);
   return _slh_dsa_verify (&_slh_dsa_128f_params, &_slh_hash_shake,
-			  pub, digest,
-			  signature + _SLH_DSA_128_SIZE);
+			  pub, digest, signature + _SLH_DSA_128_SIZE);
 }
