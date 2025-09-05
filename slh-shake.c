@@ -133,6 +133,6 @@ _slh_hash_shake =
     (nettle_hash_digest_func *) slh_shake_digest,
     (slh_hash_secret_func *) slh_shake_secret,
     (slh_hash_node_func *) slh_shake_node,
-    (slh_hash_randomizer_func *) slh_shake_randomizer,
-    (slh_hash_msg_digest_func *) slh_shake_msg_digest
+    slh_shake_randomizer,
+    slh_shake_msg_digest
   };
