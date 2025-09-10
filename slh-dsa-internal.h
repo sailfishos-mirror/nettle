@@ -242,13 +242,17 @@ _fors_gen (const struct slh_merkle_ctx_secret *ctx, unsigned index, uint8_t *sk,
 void
 _fors_sign (const struct slh_merkle_ctx_secret *ctx,
 	    const struct slh_fors_params *fors,
-	    const uint8_t *msg, uint8_t *signature, uint8_t *pub);
+	    const uint8_t *msg, uint8_t *signature, uint8_t *pub,
+	    /* Allocated by caller, initialized and clobbered by callee. */
+	    void *pub_ctx);
 
 /* Computes candidate public key from signature. */
 void
 _fors_verify (const struct slh_merkle_ctx_public *ctx,
 	      const struct slh_fors_params *fors,
-	      const uint8_t *msg, const uint8_t *signature, uint8_t *pub);
+	      const uint8_t *msg, const uint8_t *signature, uint8_t *pub,
+	      /* Allocated by caller, initialized and clobbered by callee. */
+	      void *pub_ctx);
 
 /* Just the auth path, excluding the wots signature, 144 bytes. */
 #define XMSS_AUTH_SIZE(h) ((h) * _SLH_DSA_128_SIZE)

@@ -232,7 +232,7 @@ test_fors_sign (const struct tstring *public_seed, const struct tstring *secret_
 		unsigned layer, uint64_t tree_idx, unsigned keypair, const struct tstring *msg,
 		const struct tstring *exp_pub, const struct tstring *exp_sig)
 {
-  union slh_hash_ctx tree_ctx;
+  struct sha3_ctx tree_ctx, scratch_ctx;
   const struct slh_merkle_ctx_secret ctx =
     {
       { &_slh_hash_shake, &tree_ctx, keypair },
@@ -248,14 +248,14 @@ test_fors_sign (const struct tstring *public_seed, const struct tstring *secret_
 
   _slh_hash_shake.init_tree (&tree_ctx, public_seed->data, layer, tree_idx);
 
-  _fors_sign (&ctx, fors, msg->data, sig, pub);
+  _fors_sign (&ctx, fors, msg->data, sig, pub, &scratch_ctx);
   mark_bytes_defined (exp_sig->length, sig);
   mark_bytes_defined (sizeof (pub), pub);
   ASSERT (MEMEQ (exp_sig->length, sig, exp_sig->data));
   ASSERT (MEMEQ (sizeof (pub), pub, exp_pub->data));
 
   memset (pub, 0, sizeof (pub));
-  _fors_verify (&ctx.pub, fors, msg->data, sig, pub);
+  _fors_verify (&ctx.pub, fors, msg->data, sig, pub, &scratch_ctx);
   ASSERT (MEMEQ (sizeof (pub), pub, exp_pub->data));
   free (sig);
 }

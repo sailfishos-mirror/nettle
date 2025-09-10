@@ -86,7 +86,8 @@ _slh_dsa_sign (const struct slh_dsa_params *params,
 
   uint8_t root[_SLH_DSA_128_SIZE];
 
-  _fors_sign (&merkle_ctx, &params->fors, digest, signature, root);
+  union slh_hash_ctx scratch_ctx;
+  _fors_sign (&merkle_ctx, &params->fors, digest, signature, root, &scratch_ctx);
   signature += params->fors.signature_size;
 
   _xmss_sign (&merkle_ctx, params->xmss.h, leaf_idx, root, signature, root);
@@ -124,7 +125,8 @@ _slh_dsa_verify (const struct slh_dsa_params *params,
 
   uint8_t root[_SLH_DSA_128_SIZE];
 
-  _fors_verify (&merkle_ctx, &params->fors, digest, signature, root);
+  union slh_hash_ctx scratch_ctx;
+  _fors_verify (&merkle_ctx, &params->fors, digest, signature, root, &scratch_ctx);
   signature += params->fors.signature_size;
 
   _xmss_verify (&merkle_ctx, params->xmss.h, leaf_idx, root, signature, root);
