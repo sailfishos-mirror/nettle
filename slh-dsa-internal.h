@@ -144,8 +144,6 @@ struct slh_merkle_ctx_secret
   const uint8_t *secret_seed;
 };
 
-typedef void slh_parse_digest_func (const uint8_t *digest, uint64_t *tree_idx, unsigned *leaf_idx);
-
 struct slh_xmss_params
 {
   unsigned short d; /* Levels of xmss trees. */
