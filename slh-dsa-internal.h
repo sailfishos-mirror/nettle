@@ -142,6 +142,9 @@ struct slh_merkle_ctx_secret
 {
   struct slh_merkle_ctx_public pub;
   const uint8_t *secret_seed;
+  /* Scratch hashing context, used only by xmss_leaf and _xmss_sign
+     (where it is passed on to wots operations). */
+  void *scratch_ctx;
 };
 
 struct slh_xmss_params
@@ -196,18 +199,24 @@ _slh_sha256_msg_digest (const uint8_t *randomizer, const uint8_t *pub,
 void
 _wots_gen (const struct slh_hash *hash, const void *tree_ctx,
 	   const uint8_t *secret_seed,
-	   uint32_t keypair, uint8_t *pub);
+	   uint32_t keypair, uint8_t *pub,
+	   /* Allocated by caller, initialized and clobbered by callee. */
+	   void *pub_ctx);
 
 void
 _wots_sign (const struct slh_hash *hash, const void *tree_ctx,
 	    const uint8_t *secret_seed,
 	    unsigned keypair, const uint8_t *msg,
-	    uint8_t *signature, uint8_t *pub);
+	    uint8_t *signature, uint8_t *pub,
+	    /* Allocated by caller, initialized and clobbered by callee. */
+	    void *pub_ctx);
 
 /* Computes candidate public key from signature. */
 void
 _wots_verify (const struct slh_hash *hash, const void *tree_ctx,
-	      unsigned keypair, const uint8_t *msg, const uint8_t *signature, uint8_t *pub);
+	      unsigned keypair, const uint8_t *msg, const uint8_t *signature, uint8_t *pub,
+	      /* Allocated by caller, initialized and clobbered by callee. */
+	      void *pub_ctx);
 
 /* Merkle tree functions. Could be generalized for other merkle tree
    applications, by using const void* for the ctx argument. */
@@ -273,7 +282,9 @@ _xmss_sign (const struct slh_merkle_ctx_secret *ctx, unsigned h,
 
 void
 _xmss_verify (const struct slh_merkle_ctx_public *ctx, unsigned h,
-	      unsigned idx, const uint8_t *msg, const uint8_t *signature, uint8_t *pub);
+	      unsigned idx, const uint8_t *msg, const uint8_t *signature, uint8_t *pub,
+	      /* Allocated by caller, initialized and clobbered by callee. */
+	      void *scratch_ctx);
 
 void
 _slh_dsa_pure_digest (const struct slh_hash *hash,
