@@ -103,14 +103,14 @@ typedef void slh_hash_msg_digest_func (const uint8_t *randomizer, const uint8_t 
 				       size_t msg_length, const uint8_t *msg,
 				       size_t digest_size, uint8_t *digest);
 
-typedef void slh_hash_init_tree_func (union slh_hash_ctx *tree_ctx, const uint8_t *public_seed,
+typedef void slh_hash_init_tree_func (void *tree_ctx, const uint8_t *public_seed,
 				      uint32_t layer, uint64_t tree_idx);
-typedef void slh_hash_init_hash_func (const union slh_hash_ctx *tree_ctx, union slh_hash_ctx *ctx,
+typedef void slh_hash_init_hash_func (const void *tree_ctx, void *ctx,
 				      const struct slh_address_hash *ah);
-typedef void slh_hash_secret_func (const union slh_hash_ctx *tree_ctx,
+typedef void slh_hash_secret_func (const void *tree_ctx,
 				   const struct slh_address_hash *ah,
 				   const uint8_t *secret, uint8_t *out);
-typedef void slh_hash_node_func (const union slh_hash_ctx *tree_ctx,
+typedef void slh_hash_node_func (const void *tree_ctx,
 				 const struct slh_address_hash *ah,
 				 const uint8_t *left, const uint8_t *right,
 				 uint8_t *out);
@@ -194,19 +194,19 @@ _slh_sha256_msg_digest (const uint8_t *randomizer, const uint8_t *pub,
 #define WOTS_SIGNATURE_SIZE (_WOTS_SIGNATURE_LENGTH*_SLH_DSA_128_SIZE)
 
 void
-_wots_gen (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+_wots_gen (const struct slh_hash *hash, const void *tree_ctx,
 	   const uint8_t *secret_seed,
 	   uint32_t keypair, uint8_t *pub);
 
 void
-_wots_sign (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+_wots_sign (const struct slh_hash *hash, const void *tree_ctx,
 	    const uint8_t *secret_seed,
 	    unsigned keypair, const uint8_t *msg,
 	    uint8_t *signature, uint8_t *pub);
 
 /* Computes candidate public key from signature. */
 void
-_wots_verify (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+_wots_verify (const struct slh_hash *hash, const void *tree_ctx,
 	      unsigned keypair, const uint8_t *msg, const uint8_t *signature, uint8_t *pub);
 
 /* Merkle tree functions. Could be generalized for other merkle tree

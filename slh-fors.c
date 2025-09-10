@@ -78,7 +78,7 @@ fors_node (const struct slh_merkle_ctx_public *ctx, unsigned height, unsigned in
 
 static void
 fors_sign_one (const struct slh_merkle_ctx_secret *ctx, unsigned a,
-	       unsigned idx, uint8_t *signature, union slh_hash_ctx *pub)
+	       unsigned idx, uint8_t *signature, void *pub)
 {
   uint8_t hash[_SLH_DSA_128_SIZE];
 
@@ -122,7 +122,7 @@ _fors_sign (const struct slh_merkle_ctx_secret *ctx,
 
 static void
 fors_verify_one (const struct slh_merkle_ctx_public *ctx, unsigned a,
-		 unsigned idx, const uint8_t *signature, union slh_hash_ctx *pub)
+		 unsigned idx, const uint8_t *signature, void *pub)
 {
   uint8_t root[_SLH_DSA_128_SIZE];
   struct slh_address_hash ah =

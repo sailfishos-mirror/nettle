@@ -42,7 +42,7 @@
    dst. For the ah argument, leaves ah->keypair and ah->height_chain
    unchanged, but overwrites the other fields. */
 static const uint8_t *
-wots_chain (const struct slh_hash *hash, const union slh_hash_ctx *ctx,
+wots_chain (const struct slh_hash *hash, const void *ctx,
 	    struct slh_address_hash *ah,
 	    unsigned i, unsigned s,
 	    const uint8_t *src, uint8_t *dst)
@@ -67,9 +67,9 @@ wots_chain (const struct slh_hash *hash, const union slh_hash_ctx *ctx,
 }
 
 static void
-wots_pk_init (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+wots_pk_init (const struct slh_hash *hash, const void *tree_ctx,
 	      unsigned keypair, struct slh_address_hash *ah,
-	      union slh_hash_ctx *ctx)
+	      void *ctx)
 {
   ah->type = bswap32_if_le (SLH_WOTS_PK);
   ah->keypair = bswap32_if_le (keypair);
@@ -79,7 +79,7 @@ wots_pk_init (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
 }
 
 void
-_wots_gen (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+_wots_gen (const struct slh_hash *hash, const void *tree_ctx,
 	   const uint8_t *secret_seed,
 	   uint32_t keypair, uint8_t *pub)
 {
@@ -109,10 +109,10 @@ _wots_gen (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
 
 /* Produces signature hash corresponding to the ith message nybble. Modifies addr. */
 static void
-wots_sign_one (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+wots_sign_one (const struct slh_hash *hash, const void *tree_ctx,
 	       const uint8_t *secret_seed, uint32_t keypair,
 	       unsigned i, uint8_t msg,
-	       uint8_t *signature, union slh_hash_ctx *ctx)
+	       uint8_t *signature, void *ctx)
 {
   struct slh_address_hash ah;
   uint8_t pub[_SLH_DSA_128_SIZE];
@@ -133,7 +133,7 @@ wots_sign_one (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
 }
 
 void
-_wots_sign (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+_wots_sign (const struct slh_hash *hash, const void *tree_ctx,
 	    const uint8_t *secret_seed, unsigned keypair, const uint8_t *msg,
 	    uint8_t *signature, uint8_t *pub)
 {
@@ -164,9 +164,9 @@ _wots_sign (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
 }
 
 static void
-wots_verify_one (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+wots_verify_one (const struct slh_hash *hash, const void *tree_ctx,
 		 uint32_t keypair, unsigned i, uint8_t msg,
-		 const uint8_t *signature, union slh_hash_ctx *ctx)
+		 const uint8_t *signature, void *ctx)
 {
   struct slh_address_hash ah;
   uint8_t out[_SLH_DSA_128_SIZE];
@@ -180,7 +180,7 @@ wots_verify_one (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx
 }
 
 void
-_wots_verify (const struct slh_hash *hash, const union slh_hash_ctx *tree_ctx,
+_wots_verify (const struct slh_hash *hash, const void *tree_ctx,
 	      unsigned keypair, const uint8_t *msg, const uint8_t *signature, uint8_t *pub)
 {
   struct slh_address_hash ah;
