@@ -50,10 +50,10 @@ _fors_gen (const struct slh_merkle_ctx_secret *ctx,
       bswap32_if_le (idx),
     };
 
-  ctx->pub.hash->secret (&ctx->pub.tree_ctx, &ah, ctx->secret_seed, sk);
+  ctx->pub.hash->secret (ctx->pub.tree_ctx, &ah, ctx->secret_seed, sk);
 
   ah.type = bswap32_if_le (SLH_FORS_TREE);
-  ctx->pub.hash->secret (&ctx->pub.tree_ctx, &ah, sk, leaf);
+  ctx->pub.hash->secret (ctx->pub.tree_ctx, &ah, sk, leaf);
 }
 
 static void
@@ -73,7 +73,7 @@ fors_node (const struct slh_merkle_ctx_public *ctx, unsigned height, unsigned in
       bswap32_if_le (height),
       bswap32_if_le (index),
     };
-  ctx->hash->node (&ctx->tree_ctx, &ah, left, right, out);
+  ctx->hash->node (ctx->tree_ctx, &ah, left, right, out);
 }
 
 static void
@@ -106,7 +106,7 @@ _fors_sign (const struct slh_merkle_ctx_secret *ctx,
   unsigned i, w, bits;
   unsigned mask = (1 << fors->a) - 1;
 
-  ctx->pub.hash->init_hash (&ctx->pub.tree_ctx, &pub_ctx, &ah);
+  ctx->pub.hash->init_hash (ctx->pub.tree_ctx, &pub_ctx, &ah);
 
   for (i = w = bits = 0; i < fors->k; i++, signature += (fors->a + 1) * _SLH_DSA_128_SIZE)
     {
@@ -133,7 +133,7 @@ fors_verify_one (const struct slh_merkle_ctx_public *ctx, unsigned a,
       bswap32_if_le (idx),
     };
 
-  ctx->hash->secret (&ctx->tree_ctx, &ah, signature, root);
+  ctx->hash->secret (ctx->tree_ctx, &ah, signature, root);
   _merkle_verify (ctx, fors_node, a, idx, signature + _SLH_DSA_128_SIZE, root);
 
   ctx->hash->update (pub, _SLH_DSA_128_SIZE, root);
@@ -154,7 +154,7 @@ _fors_verify (const struct slh_merkle_ctx_public *ctx,
   unsigned i, w, bits;
   unsigned mask = (1 << fors->a) - 1;
 
-  ctx->hash->init_hash (&ctx->tree_ctx, &pub_ctx, &ah);
+  ctx->hash->init_hash (ctx->tree_ctx, &pub_ctx, &ah);
 
   for (i = w = bits = 0; i < fors->k; i++, signature += (fors->a + 1) * _SLH_DSA_128_SIZE)
     {

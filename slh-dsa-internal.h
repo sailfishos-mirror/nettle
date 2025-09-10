@@ -133,8 +133,8 @@ extern const struct slh_hash _slh_hash_sha256;
 struct slh_merkle_ctx_public
 {
   const struct slh_hash *hash;
-  /* Initialized using hash->init_tree. */
-  union slh_hash_ctx tree_ctx;
+  /* Initialized based on public seed and slh_address_tree. */
+  const void *tree_ctx;
   unsigned keypair; /* Used only by fors_leaf and fors_node. */
 };
 

@@ -41,7 +41,7 @@
 static void
 xmss_leaf (const struct slh_merkle_ctx_secret *ctx, unsigned idx, uint8_t *leaf)
 {
-  _wots_gen (ctx->pub.hash, &ctx->pub.tree_ctx, ctx->secret_seed, idx, leaf);
+  _wots_gen (ctx->pub.hash, ctx->pub.tree_ctx, ctx->secret_seed, idx, leaf);
 }
 
 static void
@@ -55,7 +55,7 @@ xmss_node (const struct slh_merkle_ctx_public *ctx, unsigned height, unsigned in
       bswap32_if_le (height),
       bswap32_if_le (index),
     };
-  ctx->hash->node (&ctx->tree_ctx, &ah, left, right, out);
+  ctx->hash->node (ctx->tree_ctx, &ah, left, right, out);
 }
 
 void
@@ -64,12 +64,13 @@ _xmss_gen (const struct slh_hash *hash,
 	   const struct slh_xmss_params *xmss,
 	   uint8_t *scratch, uint8_t *root)
 {
-  struct slh_merkle_ctx_secret ctx =
+  union slh_hash_ctx tree_ctx;
+  const struct slh_merkle_ctx_secret ctx =
     {
-      { hash, {}, 0 },
+      { hash, &tree_ctx, 0 },
       secret_seed
     };
-  hash->init_tree (&ctx.pub.tree_ctx, public_seed, xmss->d - 1, 0);
+  hash->init_tree (&tree_ctx, public_seed, xmss->d - 1, 0);
   _merkle_root (&ctx, xmss_leaf, xmss_node, xmss->h, 0, root, scratch);
 }
 
@@ -77,7 +78,7 @@ void
 _xmss_sign (const struct slh_merkle_ctx_secret *ctx, unsigned h,
 	    unsigned idx, const uint8_t *msg, uint8_t *signature, uint8_t *pub)
 {
-  _wots_sign (ctx->pub.hash, &ctx->pub.tree_ctx, ctx->secret_seed, idx, msg, signature, pub);
+  _wots_sign (ctx->pub.hash, ctx->pub.tree_ctx, ctx->secret_seed, idx, msg, signature, pub);
   signature += WOTS_SIGNATURE_SIZE;
 
   _merkle_sign (ctx, xmss_leaf, xmss_node, h, idx, signature);
@@ -88,7 +89,7 @@ void
 _xmss_verify (const struct slh_merkle_ctx_public *ctx, unsigned h,
 	      unsigned idx, const uint8_t *msg, const uint8_t *signature, uint8_t *pub)
 {
-  _wots_verify (ctx->hash, &ctx->tree_ctx, idx, msg, signature, pub);
+  _wots_verify (ctx->hash, ctx->tree_ctx, idx, msg, signature, pub);
   signature += WOTS_SIGNATURE_SIZE;
 
   _merkle_verify (ctx, xmss_node, h, idx, signature, pub);

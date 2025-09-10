@@ -65,31 +65,26 @@ _slh_dsa_pure_rdigest (const struct slh_hash *hash,
   _slh_dsa_pure_digest (hash, pub, length, msg, randomizer, digest_size, digest);
 }
 
-static void
-merkle_ctx_secret_init (struct slh_merkle_ctx_secret *ctx,
-			const struct slh_hash *hash, unsigned keypair,
-			const uint8_t *secret_seed)
-{
-  ctx->pub.hash = hash;
-  ctx->pub.keypair = keypair;
-  ctx->secret_seed = secret_seed;
-}
-
 void
 _slh_dsa_sign (const struct slh_dsa_params *params,
 	       const struct slh_hash *hash,
 	       const uint8_t *pub, const uint8_t *priv,
 	       const uint8_t *digest, uint8_t *signature)
 {
-  struct slh_merkle_ctx_secret merkle_ctx;
-  uint8_t root[_SLH_DSA_128_SIZE];
   uint64_t tree_idx;
   unsigned leaf_idx;
 
   params->parse_digest (digest + params->fors.msg_size, &tree_idx, &leaf_idx);
-  merkle_ctx_secret_init (&merkle_ctx, hash, leaf_idx, priv);
 
-  hash->init_tree (&merkle_ctx.pub.tree_ctx, pub, 0, tree_idx);
+  union slh_hash_ctx tree_ctx;
+  const struct slh_merkle_ctx_secret merkle_ctx =
+    {
+      { hash, &tree_ctx, leaf_idx },
+      priv,
+    };
+  hash->init_tree (&tree_ctx, pub, 0, tree_idx);
+
+  uint8_t root[_SLH_DSA_128_SIZE];
 
   _fors_sign (&merkle_ctx, &params->fors, digest, signature, root);
   signature += params->fors.signature_size;
@@ -103,20 +98,11 @@ _slh_dsa_sign (const struct slh_dsa_params *params,
       leaf_idx = tree_idx & ((1 << params->xmss.h) - 1);
       tree_idx >>= params->xmss.h;
 
-      hash->init_tree (&merkle_ctx.pub.tree_ctx, pub, i, tree_idx);
+      hash->init_tree (&tree_ctx, pub, i, tree_idx);
 
       _xmss_sign (&merkle_ctx, params->xmss.h, leaf_idx, root, signature, root);
     }
   assert (memeql_sec (root, pub + _SLH_DSA_128_SIZE, sizeof (root)));
-}
-
-
-static void
-merkle_ctx_public_init (struct slh_merkle_ctx_public *ctx,
-			const struct slh_hash *hash, unsigned keypair)
-{
-  ctx->hash = hash;
-  ctx->keypair = keypair;
 }
 
 int
@@ -125,15 +111,18 @@ _slh_dsa_verify (const struct slh_dsa_params *params,
 		 const uint8_t *pub,
 		 const uint8_t *digest, const uint8_t *signature)
 {
-  struct slh_merkle_ctx_public merkle_ctx;
-  uint8_t root[_SLH_DSA_128_SIZE];
   uint64_t tree_idx;
   unsigned leaf_idx;
 
   params->parse_digest (digest + params->fors.msg_size, &tree_idx, &leaf_idx);
-  merkle_ctx_public_init (&merkle_ctx, hash, leaf_idx);
 
-  hash->init_tree (&merkle_ctx.tree_ctx, pub, 0, tree_idx);
+  union slh_hash_ctx tree_ctx;
+  const struct slh_merkle_ctx_public merkle_ctx =
+    { hash, &tree_ctx, leaf_idx };
+
+  hash->init_tree (&tree_ctx, pub, 0, tree_idx);
+
+  uint8_t root[_SLH_DSA_128_SIZE];
 
   _fors_verify (&merkle_ctx, &params->fors, digest, signature, root);
   signature += params->fors.signature_size;
@@ -147,7 +136,7 @@ _slh_dsa_verify (const struct slh_dsa_params *params,
       leaf_idx = tree_idx & ((1 << params->xmss.h) - 1);
       tree_idx >>= params->xmss.h;
 
-      hash->init_tree (&merkle_ctx.tree_ctx, pub, i, tree_idx);
+      hash->init_tree (&tree_ctx, pub, i, tree_idx);
 
       _xmss_verify (&merkle_ctx, params->xmss.h, leaf_idx, root, signature, root);
     }
