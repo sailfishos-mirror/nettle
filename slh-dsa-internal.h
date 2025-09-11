@@ -85,23 +85,33 @@ enum slh_addr_type
     SLH_FORS_PRF = 6,
   };
 
+/* Compute the randomizer for a prefix + message, from secret PRF. */
 typedef void slh_hash_randomizer_func (const uint8_t *public_seed, const uint8_t *secret_prf,
 				       size_t prefix_length, const uint8_t *prefix,
 				       size_t msg_length, const uint8_t *msg,
 				       uint8_t *randomizer);
 
+/* Compute the message digest, with the randomizer and public key
+   (both seed and root) as input. */
 typedef void slh_hash_msg_digest_func (const uint8_t *randomizer, const uint8_t *pub,
 				       size_t prefix_length, const uint8_t *prefix,
 				       size_t msg_length, const uint8_t *msg,
 				       size_t digest_size, uint8_t *digest);
 
+/* Initialize context with public seed and first part of the ADRS. */
 typedef void slh_hash_init_tree_func (void *tree_ctx, const uint8_t *public_seed,
 				      uint32_t layer, uint64_t tree_idx);
+/* Initialize a new context starting from the tree_ctx, extending it
+   with the rest of the ADRS. */
 typedef void slh_hash_init_hash_func (const void *tree_ctx, void *ctx,
 				      const struct slh_address_hash *ah);
+/* Initialize a temporary context like above _init_hash, and hash a
+   single value, e.g., the secret seed or a secret wots value. */
 typedef void slh_hash_secret_func (const void *tree_ctx,
 				   const struct slh_address_hash *ah,
 				   const uint8_t *secret, uint8_t *out);
+/* Initialize a temporary context like above _init_hash, and hash two
+   values: The left and right child hashes of a merkle tree node. */
 typedef void slh_hash_node_func (const void *tree_ctx,
 				 const struct slh_address_hash *ah,
 				 const uint8_t *left, const uint8_t *right,
