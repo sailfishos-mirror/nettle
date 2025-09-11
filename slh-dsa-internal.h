@@ -127,8 +127,8 @@ struct slh_hash
   slh_hash_msg_digest_func *msg_digest;
 };
 
-extern const struct slh_hash _slh_hash_shake;
-extern const struct slh_hash _slh_hash_sha256;
+extern const struct slh_hash _slh_hash_shake;  /* For sha3_ctx. */
+extern const struct slh_hash _slh_hash_sha256; /* For sha256_ctx. */
 
 struct slh_merkle_ctx_public
 {
@@ -173,24 +173,6 @@ struct slh_dsa_params
 
 extern const struct slh_dsa_params _slh_dsa_128s_params;
 extern const struct slh_dsa_params _slh_dsa_128f_params;
-
-void
-_slh_shake_randomizer (const uint8_t *public_seed, const uint8_t *secret_prf,
-		       size_t msg_length, const uint8_t *msg,
-		       uint8_t *randomizer);
-void
-_slh_shake_msg_digest (const uint8_t *randomizer, const uint8_t *pub,
-		       size_t length, const uint8_t *msg,
-		       size_t digest_size, uint8_t *digest);
-
-void
-_slh_sha256_randomizer (const uint8_t *public_seed, const uint8_t *secret_prf,
-			size_t msg_length, const uint8_t *msg,
-			uint8_t *randomizer);
-void
-_slh_sha256_msg_digest (const uint8_t *randomizer, const uint8_t *pub,
-			size_t length, const uint8_t *msg,
-			size_t digest_size, uint8_t *digest);
 
 #define _WOTS_SIGNATURE_LENGTH 35
 /* 560 bytes */

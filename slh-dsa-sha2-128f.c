@@ -53,7 +53,7 @@ slh_dsa_sha2_128f_root (const uint8_t *public_seed, const uint8_t *private_seed,
 
 void
 slh_dsa_sha2_128f_generate_keypair (uint8_t *pub, uint8_t *priv,
-				     void *random_ctx, nettle_random_func *random)
+				    void *random_ctx, nettle_random_func *random)
 {
   random (random_ctx, SLH_DSA_128_SEED_SIZE, pub);
   random (random_ctx, 2*SLH_DSA_128_SEED_SIZE, priv);

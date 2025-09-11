@@ -63,8 +63,8 @@ slh_dsa_sha2_128s_generate_keypair (uint8_t *pub, uint8_t *priv,
 /* Only the "pure" and deterministic variant. */
 void
 slh_dsa_sha2_128s_sign (const uint8_t *pub, const uint8_t *priv,
-			 size_t length, const uint8_t *msg,
-			 uint8_t *signature)
+			size_t length, const uint8_t *msg,
+			uint8_t *signature)
 {
   uint8_t digest[SLH_DSA_M];
   _slh_dsa_pure_rdigest (&_slh_hash_sha256,
@@ -76,8 +76,8 @@ slh_dsa_sha2_128s_sign (const uint8_t *pub, const uint8_t *priv,
 
 int
 slh_dsa_sha2_128s_verify (const uint8_t *pub,
-			   size_t length, const uint8_t *msg,
-			   const uint8_t *signature)
+			  size_t length, const uint8_t *msg,
+			  const uint8_t *signature)
 {
   uint8_t digest[SLH_DSA_M];
   _slh_dsa_pure_digest (&_slh_hash_sha256,
