@@ -35,8 +35,6 @@
 #include <stdint.h>
 
 #include "nettle-types.h"
-#include "sha2.h"
-#include "sha3.h"
 
 /* Name mangling */
 #define _wots_gen _nettle_wots_gen
@@ -86,12 +84,6 @@ enum slh_addr_type
     SLH_WOTS_PRF = 5,
     SLH_FORS_PRF = 6,
   };
-
-union slh_hash_ctx
-{
-  struct sha256_ctx sha256;
-  struct sha3_ctx sha3;
-};
 
 typedef void slh_hash_randomizer_func (const uint8_t *public_seed, const uint8_t *secret_prf,
 				       size_t prefix_length, const uint8_t *prefix,
@@ -254,7 +246,7 @@ void
 _xmss_gen (const struct slh_hash *hash,
 	   const uint8_t *public_seed, const uint8_t *secret_seed,
 	   const struct slh_xmss_params *xmss, uint8_t *root,
-	   void *tree_ctx, uint8_t *scratch);
+	   void *tree_ctx, void *scratch_ctx, uint8_t *scratch);
 
 /* Signs using wots, then signs wots public key using xmss. Also
    returns the xmss public key (i.e., root hash).*/
@@ -285,13 +277,13 @@ _slh_dsa_sign (const struct slh_dsa_params *params,
 	       const struct slh_hash *hash,
 	       const uint8_t *pub, const uint8_t *priv,
 	       const uint8_t *digest, uint8_t *signature,
-	       void *tree_ctx);
+	       void *tree_ctx, void *scratch_ctx);
 int
 _slh_dsa_verify (const struct slh_dsa_params *params,
 		 const struct slh_hash *hash,
 		 const uint8_t *pub,
 		 const uint8_t *digest, const uint8_t *signature,
-		 void *tree_ctx);
+		 void *tree_ctx, void *scratch_ctx);
 
 
 #endif /* NETTLE_SLH_DSA_INTERNAL_H_INCLUDED */
