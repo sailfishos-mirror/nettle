@@ -61,17 +61,16 @@ xmss_node (const struct slh_merkle_ctx_public *ctx, unsigned height, unsigned in
 void
 _xmss_gen (const struct slh_hash *hash,
 	   const uint8_t *public_seed, const uint8_t *secret_seed,
-	   const struct slh_xmss_params *xmss,
-	   uint8_t *scratch, uint8_t *root)
+	   const struct slh_xmss_params *xmss, uint8_t *root,
+	   void *tree_ctx, uint8_t *scratch)
 {
-  union slh_hash_ctx tree_ctx;
   union slh_hash_ctx scratch_ctx;
   const struct slh_merkle_ctx_secret ctx =
     {
-      { hash, &tree_ctx, 0 },
+      { hash, tree_ctx, 0 },
       secret_seed, &scratch_ctx,
     };
-  hash->init_tree (&tree_ctx, public_seed, xmss->d - 1, 0);
+  hash->init_tree (tree_ctx, public_seed, xmss->d - 1, 0);
   _merkle_root (&ctx, xmss_leaf, xmss_node, xmss->h, 0, root, scratch);
 }
 

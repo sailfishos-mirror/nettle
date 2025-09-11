@@ -69,21 +69,22 @@ void
 _slh_dsa_sign (const struct slh_dsa_params *params,
 	       const struct slh_hash *hash,
 	       const uint8_t *pub, const uint8_t *priv,
-	       const uint8_t *digest, uint8_t *signature)
+	       const uint8_t *digest, uint8_t *signature,
+	       void *tree_ctx)
 {
   uint64_t tree_idx;
   unsigned leaf_idx;
 
   params->parse_digest (digest + params->fors.msg_size, &tree_idx, &leaf_idx);
 
-  union slh_hash_ctx tree_ctx;
   union slh_hash_ctx scratch_ctx;
   const struct slh_merkle_ctx_secret merkle_ctx =
     {
-      { hash, &tree_ctx, leaf_idx },
+      { hash, tree_ctx, leaf_idx },
       priv, &scratch_ctx,
     };
-  hash->init_tree (&tree_ctx, pub, 0, tree_idx);
+
+  hash->init_tree (tree_ctx, pub, 0, tree_idx);
 
   uint8_t root[_SLH_DSA_128_SIZE];
 
@@ -99,7 +100,7 @@ _slh_dsa_sign (const struct slh_dsa_params *params,
       leaf_idx = tree_idx & ((1 << params->xmss.h) - 1);
       tree_idx >>= params->xmss.h;
 
-      hash->init_tree (&tree_ctx, pub, i, tree_idx);
+      hash->init_tree (tree_ctx, pub, i, tree_idx);
 
       _xmss_sign (&merkle_ctx, params->xmss.h, leaf_idx, root, signature, root);
     }
@@ -110,18 +111,18 @@ int
 _slh_dsa_verify (const struct slh_dsa_params *params,
 		 const struct slh_hash *hash,
 		 const uint8_t *pub,
-		 const uint8_t *digest, const uint8_t *signature)
+		 const uint8_t *digest, const uint8_t *signature,
+		 void *tree_ctx)
 {
   uint64_t tree_idx;
   unsigned leaf_idx;
 
   params->parse_digest (digest + params->fors.msg_size, &tree_idx, &leaf_idx);
 
-  union slh_hash_ctx tree_ctx;
   const struct slh_merkle_ctx_public merkle_ctx =
-    { hash, &tree_ctx, leaf_idx };
+    { hash, tree_ctx, leaf_idx };
 
-  hash->init_tree (&tree_ctx, pub, 0, tree_idx);
+  hash->init_tree (tree_ctx, pub, 0, tree_idx);
 
   uint8_t root[_SLH_DSA_128_SIZE];
 
@@ -138,7 +139,7 @@ _slh_dsa_verify (const struct slh_dsa_params *params,
       leaf_idx = tree_idx & ((1 << params->xmss.h) - 1);
       tree_idx >>= params->xmss.h;
 
-      hash->init_tree (&tree_ctx, pub, i, tree_idx);
+      hash->init_tree (tree_ctx, pub, i, tree_idx);
 
       _xmss_verify (&merkle_ctx, params->xmss.h, leaf_idx, root, signature, root, &scratch_ctx);
     }

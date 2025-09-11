@@ -253,8 +253,8 @@ _fors_verify (const struct slh_merkle_ctx_public *ctx,
 void
 _xmss_gen (const struct slh_hash *hash,
 	   const uint8_t *public_seed, const uint8_t *secret_seed,
-	   const struct slh_xmss_params *xmss,
-	   uint8_t *scratch, uint8_t *root);
+	   const struct slh_xmss_params *xmss, uint8_t *root,
+	   void *tree_ctx, uint8_t *scratch);
 
 /* Signs using wots, then signs wots public key using xmss. Also
    returns the xmss public key (i.e., root hash).*/
@@ -284,12 +284,14 @@ void
 _slh_dsa_sign (const struct slh_dsa_params *params,
 	       const struct slh_hash *hash,
 	       const uint8_t *pub, const uint8_t *priv,
-	       const uint8_t *digest, uint8_t *signature);
+	       const uint8_t *digest, uint8_t *signature,
+	       void *tree_ctx);
 int
 _slh_dsa_verify (const struct slh_dsa_params *params,
 		 const struct slh_hash *hash,
 		 const uint8_t *pub,
-		 const uint8_t *digest, const uint8_t *signature);
+		 const uint8_t *digest, const uint8_t *signature,
+		 void *tree_ctx);
 
 
 #endif /* NETTLE_SLH_DSA_INTERNAL_H_INCLUDED */
