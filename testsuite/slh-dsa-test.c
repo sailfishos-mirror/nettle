@@ -31,58 +31,10 @@
 
 #include "testutils.h"
 
-#include "base16.h"
 #include "sha3.h"
 #include "slh-dsa.h"
 #include "slh-dsa-internal.h"
 #include "bswap-internal.h"
-
-#include <errno.h>
-
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
-static const struct tstring *
-read_hex_file (const char *name, size_t max_size)
-{
-  char input_buf[1000];
-  FILE *input = open_srcdir_file (name);
-  size_t done;
-  struct tstring *s;
-  struct base16_decode_ctx ctx;
-  base16_decode_init (&ctx);
-
-  /* This function expects to read up to EOF, and fails if the amount
-     of data exceeds the max size. */
-  s = tstring_alloc (max_size);
-
-  for (done = 0;;)
-    {
-      size_t left = s->length - done;
-      size_t got = fread (input_buf, 1, MIN (left, sizeof (input_buf)), input);
-      size_t res;
-
-      if (!got)
-	{
-	  if (ferror (input))
-	    {
-	      fprintf (stderr, "reading %s failed: %s\n", name, strerror (errno));
-	      FAIL ();
-	    }
-	  fclose (input);
-	  ASSERT (base16_decode_final (&ctx));
-	  s->length = done;
-	  return s;
-	}
-
-      res = s->length - done;
-      if (!base16_decode_update (&ctx, &res, s->data + done, got, input_buf))
-	{
-	  fprintf (stderr, "hex decoding %s failed (possibly exceeding max size)\n", name);
-	  FAIL ();
-	}
-      done += res;
-    }
-}
 
 static void
 test_wots_gen (const struct tstring *public_seed, const struct tstring *secret_seed,

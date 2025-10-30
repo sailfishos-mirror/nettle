@@ -71,6 +71,9 @@ print_hex(size_t length, const uint8_t *data);
 FILE *
 open_srcdir_file (const char *name);
 
+const struct tstring *
+read_hex_file (const char *name, size_t max_size);
+
 /* If side-channel tests are requested, attach valgrind annotations on
    given memory area. */
 void
