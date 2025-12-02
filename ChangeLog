@@ -16,6 +16,26 @@
 	* base64-decode.c (base64_decode_update): Analogous fix. This
 	regression was reported by Robert Augusteijn.
 
+2025-12-02  Niels Möller  <nisse@lysator.liu.se>
+
+	Copy getopt files from current gnulib, using gnulib-tool.sh --copy-file.
+	* lib/getopt_int.h: New file (replacing old getopt_int.h).
+	* lib/getopt-ext.h: New file.
+	* lib/getopt-core.h: New File.
+	* lib/getopt.c: New file. Only change from gnulib is to wrap the
+	gettext.h usage inside an #ifndef _.
+	* lib/getopt1.c: New file.
+	* getopt.h: Rewritten as a wrapper for lib/getopt-core.h and
+	lib/getopt-ext.h.
+	* getopt.c: Rewritten as a wrapper for lib/getopt.c, including an
+	ELIDE_CODE check.
+	* getopt1.c: Analogous wrapper for lib/getopt1.c.
+	* Makefile.in (PRE_CPPFLAGS): Add -I$(srcdir), needed for #include
+	<getopt.h> from files in lib/.
+	(gnulib_FILES): New variable.
+	(DISTFILES): Drop getopt_int.h, moved to lib/.
+	(distdir): Populate lib/ directory with $(gnulib_FILES).
+
 2025-11-05  Niels Möller  <nisse@lysator.liu.se>
 
 	* testsuite/slh-dsa-test.c (read_hex_file): Simplify, using
