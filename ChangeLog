@@ -1,3 +1,10 @@
+2026-01-08  Niels Möller  <nisse@lysator.liu.se>
+
+	* ocb.h (struct ocb_ctx): Change types of data_count and
+	message_count to uint32_t and uint64_t, respectively, from size_t.
+	Makes the implementation limits on the size of associated data and
+	cleartext be platform independent.
+
 2026-01-02  Niels Möller  <nisse@lysator.liu.se>
 
 	* sexp.c (sexp_iterator_exit_list): Rewrite to not recurse via

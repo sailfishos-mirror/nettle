@@ -79,8 +79,8 @@ struct ocb_ctx {
   /* Authentication for the message */
   union nettle_block16 checksum;
   /* Count of processed blocks. */
-  size_t data_count;
-  size_t message_count;
+  uint32_t data_count;
+  uint64_t message_count;
 };
 
 void
