@@ -64,25 +64,6 @@ ocb_set_key (struct ocb_key *key, const void *cipher, nettle_cipher_func *f)
   block16_mulx_be (&key->L[2], &key->L[1]);
 }
 
-/* Add x^k L[2], where k is the number of trailing zero bits in i. */
-static void
-update_offset(const struct ocb_key *key,
-	      union nettle_block16 *offset, uint64_t i)
-{
-  if (i & 1)
-    block16_xor (offset, &key->L[2]);
-  else
-    {
-      assert (i > 0);
-      union nettle_block16 diff;
-      block16_mulx_be (&diff, &key->L[2]);
-      for (i >>= 1; !(i&1); i >>= 1)
-	block16_mulx_be (&diff, &diff);
-
-      block16_xor (offset, &diff);
-    }
-}
-
 static void
 pad_block (union nettle_block16 *block, size_t length, const uint8_t *data)
 {
@@ -130,13 +111,30 @@ ocb_set_nonce (struct ocb_ctx *ctx,
   ctx->data_count = ctx->message_count = 0;
 }
 
+/* Construct x^k L[2], where k > 0 is the number of trailing zero bits
+   in count, where count should be even. */
+static void
+ocb_mul_xk (const struct ocb_key *key, uint64_t count,
+	    union nettle_block16 *dst)
+{
+  assert (count > 1);
+
+  /* In principle, count should always be even, but since the initial
+     shift below discards a bit, it works fine also if count is the
+     intended even number + 1. */
+  block16_mulx_be (dst, &key->L[2]);
+  for (count >>= 1; !(count&1); count >>= 1)
+    block16_mulx_be (dst, dst);
+}
+
 static void
 ocb_fill_n (const struct ocb_key *key,
 	    union nettle_block16 *offset, uint64_t count,
 	    size_t n, union nettle_block16 *o)
 {
-  assert (n > 0);
+  union nettle_block16 diff;
   union nettle_block16 *prev;
+  assert (n > 0);
   if (count & 1)
     prev = offset;
   else
@@ -151,16 +149,12 @@ ocb_fill_n (const struct ocb_key *key,
 
   for (; n >= 2; n -= 2, o += 2)
     {
-      size_t i;
       count += 2; /* Always odd. */
 
-      /* Based on trailing zeros of ctx->message_count - 1, the
+      /* Based on trailing zeros of count - 1, the
          initial shift below discards a one bit. */
-      block16_mulx_be (&o[0], &key->L[2]);
-      for (i = count >> 1; !(i&1); i >>= 1)
-	block16_mulx_be (&o[0], &o[0]);
-
-      block16_xor (&o[0], prev);
+      ocb_mul_xk (key, count, &diff);
+      block16_xor3 (&o[0], prev, &diff);
       block16_xor3 (&o[1], &o[0], &key->L[2]);
       prev = &o[1];
     }
@@ -168,7 +162,8 @@ ocb_fill_n (const struct ocb_key *key,
 
   if (n > 0)
     {
-      update_offset (key, offset, ++count);
+      ocb_mul_xk (key, ++count, &diff);
+      block16_xor (offset, &diff);
       block16_set (o, offset);
     }
 }

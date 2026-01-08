@@ -1,5 +1,9 @@
 2026-01-08  Niels Möller  <nisse@lysator.liu.se>
 
+	* ocb.c (update_offset): Deleted function, replaced with...
+	(ocb_mul_xk): New function.
+	(ocb_fill_n): Use ocb_mul_xk both in main loop and for final block.
+
 	* ocb.h (struct ocb_ctx): Change types of data_count and
 	message_count to uint32_t and uint64_t, respectively, from size_t.
 	Makes the implementation limits on the size of associated data and
