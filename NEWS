@@ -130,6 +130,11 @@ NEWS for the Nettle 4.0 release
 	  Baryshkov years ago, but delayed, since it implies an ABI
 	  break.
 
+	* For OCB block counters, use type uint32_t for blocks of
+	  associated data, and uint64_t for message blocks, instead of
+	  size_t. This makes the implementation limits the same for
+	  32-bit and 64-bit platforms.
+
 	Bug fixes:
 
 	* Fix off-by-one bug in sexp parser, which could result in a
