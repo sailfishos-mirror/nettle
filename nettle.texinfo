@@ -3352,7 +3352,9 @@ shortest string of zero bytes such that @code{IC} is exactly one block
 in length.
 
 @item The authentication tag is encrypted using using @acronym{CTR} mode:
-@code{MAC = E_k(IC) XOR T}
+@code{MAC = E_k(IC) XOR T}. The tag size must be even, at least 4, and
+at most 16. The intended tag size is encoded into @code{IC} via the
+@code{flags} field.
 
 @item The plaintext is then encrypted using @acronym{CTR} mode with an
 initial counter of @code{IC+1}.
@@ -3381,8 +3383,13 @@ Holds state corresponding to a particular message.
 @end defvr
 
 @defvr Constant CCM_DIGEST_SIZE
-Size of the @acronym{CCM} digest, 16.
+Recommended size of the @acronym{CCM} digest, 16.
 @end defvr
+
+@defvr Constant CCM_MIN_DIGEST_SIZE
+Smallest size of the @acronym{CCM} digest, 4.
+@end defvr
+
 
 @defvr Constant CCM_MIN_NONCE_SIZE
 @defvrx Constant CCM_MAX_NONCE_SIZE
@@ -3414,10 +3421,12 @@ for each message @emph{must} use a length that is a multiple of the
 block size.
 @end deftypefun
 
-@deftypefun void ccm_digest (struct ccm_ctx *@var{ctx}, const void *@var{cipher}, nettle_cipher_func *@var{f}, size_t @var{length}, uint8_t *@var{digest})
+@deftypefun void ccm_digest (struct ccm_ctx *@var{ctx}, const void *@var{cipher}, nettle_cipher_func *@var{f}, uint8_t *@var{digest})
 Extracts the message digest (also known ``authentication tag''). This is
-the final operation when processing a message. @var{length} should be
-equal to the @var{taglen} parameter supplied to @code{ccm_set_nonce},
+the final operation when processing a message. It writes @var{taglen}
+octets to the @var{digest} area, where @var{taglen} is the parameter
+supplied to @code{ccm_set_nonce} earlier. A buffer of size
+@code{CCM_DIGEST_SIZE}, i.e., 16, is always sufficient.
 @end deftypefun
 
 To encrypt a message using the general @acronym{CCM} interface, set the
@@ -3515,11 +3524,14 @@ These are identical to @code{ccm_encrypt} and @code{ccm_decrypt}, except
 that @var{cipher}, @var{f}, and @var{ctx} are replaced with a context structure.
 @end deftypefun
 
-@deftypefun void ccm_aes128_digest (struct ccm_aes128_ctx *@var{ctx}, size_t @var{length}, uint8_t *@var{digest})
-@deftypefunx void ccm_aes192_digest (struct ccm_aes192_ctx *@var{ctx}, size_t @var{length}, uint8_t *@var{digest})
-@deftypefunx void ccm_aes256_digest (struct ccm_aes256_ctx *@var{ctx}, size_t @var{length}, uint8_t *@var{digest})
+@deftypefun void ccm_aes128_digest (struct ccm_aes128_ctx *@var{ctx}, uint8_t *@var{digest})
+@deftypefunx void ccm_aes192_digest (struct ccm_aes192_ctx *@var{ctx}, uint8_t *@var{digest})
+@deftypefunx void ccm_aes256_digest (struct ccm_aes256_ctx *@var{ctx}, uint8_t *@var{digest})
 These are identical to @code{ccm_digest}, except that @var{cipher},
-@var{f}, and @var{ctx} are replaced with a context structure.
+@var{f}, and @var{ctx} are replaced with a context structure. The number
+of octets written to the @var{digest} area is determined by the
+@var{taglen} parameter supplied to the corresponding @code{_set_nonce}
+function earlier.
 @end deftypefun
 
 @deftypefun void ccm_aes128_encrypt_message (const struct aes128_ctx *@var{cipher}, size_t @var{nlength}, const uint8_t *@var{nonce}, size_t @var{alength}, const uint8_t *@var{adata}, size_t @var{tlength}, size_t @var{clength}, uint8_t *@var{dst}, const uint8_t *@var{src})

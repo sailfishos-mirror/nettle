@@ -1,5 +1,7 @@
 2026-01-14  Niels Möller  <nisse@lysator.liu.se>
 
+	* nettle.texinfo (CCM): Update CCM documentation.
+
 	* ccm.h (CCM_MIN_DIGEST_SIZE): New constant.
 	(struct ccm_ctx): New field tag_length, storing the size used for
 	constructing the IV in ccm_set_nonce.
