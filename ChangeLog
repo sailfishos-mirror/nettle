@@ -1,5 +1,13 @@
 2026-01-14  Niels Möller  <nisse@lysator.liu.se>
 
+	* ocb.h (struct ocb_ctx): New field tag_length, storing the size
+	passed to ocb_set_nonce.
+	* ocb.c (ocb_set_nonce): Store tag length in context.
+	(ocb_digest): Delete length argument. Size of digest was stored in
+	the context by ocb_set_nonce. Updated all callers.
+	* ocb-aes128.c (ocb_aes128_digest): Deleted length argument.
+	* non-nettle.c (ocb_aes128_t96_digest): Deleted.
+
 	* nettle.texinfo (CCM): Update CCM documentation.
 
 	* ccm.h (CCM_MIN_DIGEST_SIZE): New constant.
