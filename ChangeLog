@@ -1,3 +1,18 @@
+2026-01-14  Niels Möller  <nisse@lysator.liu.se>
+
+	* ccm.h (CCM_MIN_DIGEST_SIZE): New constant.
+	(struct ccm_ctx): New field tag_length, storing the size used for
+	constructing the IV in ccm_set_nonce.
+	* ccm.c (ccm_set_nonce): Check that tag length is according to
+	spec, and store in context.
+	(ccm_digest): Delete length argument. Size of digest was stored in
+	the context by ccm_set_nonce. Updated all callers.
+	* ccm-aes128.c (ccm_aes128_digest): Delete length argument.
+	* ccm-aes192.c (ccm_aes192_digest): Likewise.
+	* ccm-aes256.c: Likewise.
+	* testsuite/ccm-test.c (test_main): Delete test from IEEE
+	802.15.4-2011, C.2.2, since it uses an invalid zero tag length.
+
 2026-01-08  Niels Möller  <nisse@lysator.liu.se>
 
 	* ocb.c (update_offset): Deleted function, replaced with...
