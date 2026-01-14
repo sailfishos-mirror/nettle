@@ -3657,7 +3657,7 @@ The maximum nonce size for @acronym{OCB}, 15.
 @end defvr
 
 @defvr Constant OCB_DIGEST_SIZE
-Size of the @acronym{OCB} authentication tag.
+Recommended size of the @acronym{OCB} authentication tag, 16.
 @end defvr
 
 @deftypefun void ocb_set_key (struct ocb_key *@var{key}, const void *@var{cipher}, nettle_cipher_func *@var{f})
@@ -3670,9 +3670,8 @@ encryption function.
 Initializes @var{ctx} for processing a new message, using the given
 nonce. The @var{cipher} must be initialized for encryption, and @var{f}
 should be the corresponding encryption function. The @var{tag_length}
-(non-zero, and at most 16) is included when initializing the state, and
-should be the same value later passed to @code{ocb_digest}. Nonce is
-optional, and length at most 15 bytes.
+(non-zero, and at most 16) is included when initializing the state.
+Nonce is optional, and length at most 15 bytes.
 @end deftypefun
 
 @deftypefun void ocb_update (struct ocb_ctx *@var{ctx}, const struct ocb_key *@var{key}, const void *@var{cipher}, nettle_cipher_func *@var{f}, size_t @var{length}, const uint8_t *@var{data})
@@ -3697,12 +3696,12 @@ the same). All but the last call for each message @emph{must} use a
 length that is a multiple of the block size.
 @end deftypefun
 
-@deftypefun void ocb_digest (const struct ocb_ctx *@var{ctx}, const struct ocb_key *@var{key}, const void *@var{cipher}, nettle_cipher_func *@var{f}, size_t @var{length}, uint8_t *@var{digest})
+@deftypefun void ocb_digest (const struct ocb_ctx *@var{ctx}, const struct ocb_key *@var{key}, const void *@var{cipher}, nettle_cipher_func *@var{f}, uint8_t *@var{digest})
 Extracts the message digest (also known ``authentication tag''). This is
-the final operation when processing a message. The @var{length} value
-@emph{should} be the same as the tag length passed to the preceding
-@code{ocb_set_nonce} call (using a different length is possible, but
-incompatible with @cite{RFC 7253}).
+the final operation when processing a message. It writes @var{tag_length}
+octets to the @var{digest} area, where @var{tag_length} is the parameter
+supplied to @code{ocb_set_nonce} earlier. A buffer of size
+@code{OCB_DIGEST_SIZE}, i.e., 16, is always sufficient.
 @end deftypefun
 
 @deftypefun void ocb_encrypt_message (const struct ocb_key *@var{ocb_key}, const void *@var{cipher}, nettle_cipher_func *@var{f}, size_t @var{nlength}, const uint8_t *@var{nonce}, size_t @var{alength}, const uint8_t *@var{adata}, size_t @var{tlength}, size_t @var{clength}, uint8_t *@var{dst}, const uint8_t *@var{src})
@@ -3769,12 +3768,11 @@ each message @emph{must} use a length that is a multiple of the block
 size.
 @end deftypefun
 
-@deftypefun void ocb_aes128_digest (struct ocb_ctx *@var{ctx}, const struct ocb_aes128_encrypt_key *@var{key}, size_t @var{length}, uint8_t *@var{digest})
+@deftypefun void ocb_aes128_digest (struct ocb_ctx *@var{ctx}, const struct ocb_aes128_encrypt_key *@var{key}, uint8_t *@var{digest})
 Extracts the message digest (also known ``authentication tag''). This is
-the final operation when processing a message. The @var{length} value
-@emph{should} be the same as the tag length passed to the preceding
-@code{ocb_aes128_set_nonce} call (using a different length is possible, but
-incompatible with @cite{RFC 7253}).
+the final operation when processing a message. The number of octets
+written to the @var{digest} area is determined by the @var{tag_length}
+parameter supplied to the @code{ocb_aes128_set_nonce} function earlier.
 @end deftypefun
 
 @deftypefun void ocb_aes128_encrypt_message (const struct ocb_aes128_encrypt_key *@var{key}, size_t @var{nlength}, const uint8_t *@var{nonce}, size_t @var{alength}, const uint8_t *@var{adata}, size_t @var{tlength}, size_t @var{clength}, uint8_t *@var{dst}, const uint8_t *@var{src})

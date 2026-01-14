@@ -1,5 +1,7 @@
 2026-01-14  Niels Möller  <nisse@lysator.liu.se>
 
+	* nettle.texinfo (OCB): Update OCB documentation.
+
 	* ocb.h (struct ocb_ctx): New field tag_length, storing the size
 	passed to ocb_set_nonce.
 	* ocb.c (ocb_set_nonce): Store tag length in context.

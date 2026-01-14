@@ -33,10 +33,14 @@ NEWS for the Nettle 4.0 release
 	  they always produce the full-size digest. The typedef
 	  nettle_hash_digest_func has also been changed accordingly.
 
-	  There are two exceptions: CCM and OCB (functions ccm_digest,
-	  ocb_digest, ccm_ae128_digest, ocb_aes128_digest, ...). These
-	  AEAD algorithms are specified with a variable tag length,
-	  which is not a mere truncation of the output.
+	  There are two exceptions: CCM and OCB. These AEAD algorithms
+	  are specified with a variable tag length, which is not a
+	  mere truncation of the output. Their _digest functions
+	  (ccm_digest, ocb_digest, ccm_ae128_digest, ...) also have
+	  their length argument deleted, but they still produce a
+	  variable size digest. The number of octets to write (at most
+	  16) is stored into the context struct by the corresponding
+	  _set_nonce function.
 
 	* The functions to process complete messages using CCM AES now
 	  take a const cipher context as the first argument, e.g,
