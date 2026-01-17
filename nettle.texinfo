@@ -5785,13 +5785,13 @@ signature is valid, otherwise 0.
 @cindex SPHINCS+
 
 SLH-DSA stands for Stateless hash-based digital signature algorithm. As
-the name suggests, it's security is based a cryptographic hash function.
-It is intended to be secure against an attacker with a large working
-quantum computer, often referred to as a ``post-quantum'' cryptographic
-algorithm. This is in contrast to ``classical'' public key algorithms
-based on the difficulty of the discrete logarithm problem or the
-factoring problem, because those problems can be solved efficiently if
-or when the attacker has a large scale quantum computer at their
+the name suggests, its security is based on a cryptographic hash
+function. It is intended to be secure against an attacker with a large
+working quantum computer, often referred to as a ``post-quantum''
+cryptographic algorithm. This is in contrast to ``classical'' public key
+algorithms based on the difficulty of the discrete logarithm problem or
+the factoring problem, because those problems can be solved efficiently
+if or when the attacker has a large scale quantum computer at their
 disposal.
 
 The SLH-DSA algorithm was standardized by NIST in 2024, as
