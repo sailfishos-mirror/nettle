@@ -1,3 +1,10 @@
+2026-01-18  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo (Hash functions): Update hash intro.
+	(Authenticated encryption): Revise intro.
+	(Randomness): Recommend using operating system randomness
+	facilities.
+
 2026-01-14  Niels Möller  <nisse@lysator.liu.se>
 
 	* nettle.texinfo (OCB): Update OCB documentation.
