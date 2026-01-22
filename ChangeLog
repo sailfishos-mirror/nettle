@@ -1,3 +1,10 @@
+2026-01-22  Niels Möller  <nisse@lysator.liu.se>
+
+	* ed448-shake256-verify.c (ed448_shake256_verify): By RFC 8032,
+	the final octet of an ed448 signature must always be zero. Add
+	missing check that it indeed is zero. Reported by Oren Yomtov.
+	* testsuite/ed448-test.c (test_wycheproof): New testcase.
+
 2026-01-18  Niels Möller  <nisse@lysator.liu.se>
 
 	* nettle.texinfo (Hash functions): Update hash intro.

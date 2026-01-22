@@ -56,8 +56,10 @@ ed448_shake256_verify (const uint8_t *pub,
 #define scratch_out (scratch + 3*ecc->p.size)
   sha3_init (&ctx);
 
-  res = (_eddsa_decompress (ecc,
-			    A, pub, scratch_out)
+  /* By RFC 8032, the final octet of the signature must be always
+     zero. Checked here, and ignored by the internal _eddsa_verify. */
+  res = (signature[ED448_SIGNATURE_SIZE - 1] == 0
+	 && _eddsa_decompress (ecc, A, pub, scratch_out)
 	 && _eddsa_verify (ecc, &_nettle_ed448_shake256, pub, A,
 			   &ctx,
 			   length, msg, signature,
