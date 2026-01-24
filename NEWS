@@ -146,6 +146,10 @@ NEWS for the Nettle 4.0 release
 	  recursion and stack usage for some inputs. Both problems
 	  reported via oss-fuzz.
 
+	* Fix ed448_shake256_verify to check that the final signature
+	  octet is zero (previous versions completely ignored this
+	  somewhat redundant octet). Reported by Oren Yomtov.
+
 	New features:
 
 	* Support for SLH-DSA signatures (stateless hash-based digital
