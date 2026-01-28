@@ -1,3 +1,10 @@
+2026-01-28  Niels Möller  <nisse@lysator.liu.se>
+
+	* arm64: Add alignment at each function prologue.
+	* powerpc64/p8/sha256-compress-n.asm: Add consistent alignment.
+	* x86/sha1-compress.asm: Likewise.
+	* x86_64: Likewise, several files.
+
 2026-01-24  Niels Möller  <nisse@lysator.liu.se>
 
 	Copy files from https://git.savannah.gnu.org/cgit/config.git/plain/
