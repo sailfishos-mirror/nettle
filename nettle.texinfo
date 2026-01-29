@@ -6214,9 +6214,12 @@ of deterministic randomness generators published by NIST in SP 800-90A.
 We support what we believe is the reasonable parts of the CTR_DRBG
 algorithm for AES256.  Re-seeding, personalization strings, derivation
 functions and support for non-AES256 is not implemented.
-Personalization strings can be implemented by the caller, if desired,
-with xor.  If you need re-seeding or entropy derivation, we suggest that
-you use Yarrow instead.
+
+Re-seeding and personalization strings can be implemented by the
+caller, if desired.  To implement re-seeding, use
+@code{drbg_ctr_aes256_update}.  Similarly, personalization strings can
+be implemented with @code{memxor}.  If you need entropy derivation, we
+suggest that you use Yarrow instead.
 
 The security bounds of DRBG-CTR are not intuitive, see ``Security Bounds
 for the NIST Codebook-based Deterministic Random Bit Generator'' by
@@ -6243,6 +6246,11 @@ Initialize the DRBG-CTR-AES256 context using
 @deftypefun void drbg_ctr_aes256_random (struct drbg_ctr_aes256_ctx *@var{ctx}, size_t n, uint8_t *@var{dst})
 Generates @var{n} octets of output into @var{dst}.  The generator must
 be initialized before you call this function.
+
+@deftypefun void drbg_ctr_aes256_update (struct drbg_ctr_aes256_ctx *@var{ctx}, const uint8_t *@var{provided_data})
+Updates the internal state of @var{ctx} with @var{provided_data},
+which is either NULL or a pointer to data of
+@code{DRBG_CTR_AES256_SEED_SIZE} octets. This function is used for re-seeding.
 @end deftypefun
 
 @node ASCII encoding
