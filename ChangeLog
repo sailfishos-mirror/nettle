@@ -1,3 +1,10 @@
+2026-01-29  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/testutils.h (struct tstring): Change traditional
+	data[1] to C99 flexible array member data[].
+	* testsuite/testutils.c (tstring_alloc): Update allocation
+	accordingly.
+
 2026-01-28  Niels Möller  <nisse@lysator.liu.se>
 
 	* arm64: Add alignment at each function prologue.

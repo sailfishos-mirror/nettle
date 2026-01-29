@@ -45,7 +45,7 @@ xalloc(size_t size);
 struct tstring {
   struct tstring *next;
   size_t length;
-  uint8_t data[1];
+  uint8_t data[];
 };
 
 struct tstring *
