@@ -155,6 +155,9 @@ NEWS for the Nettle 4.0 release
 	* Support for SLH-DSA signatures (stateless hash-based digital
 	  signature algorithm). See the Nettle manual for details.
 
+	* New public function drbg_ctr_aes256_update, to enable
+	  FIPS-compliant reseeding. Contributed by Daiki Ueno.
+
 	Configure and build changes:
 
 	* Support for at least C99 is required when building Nettle.

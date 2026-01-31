@@ -1,3 +1,12 @@
+2026-01-31  Niels Möller  <nisse@lysator.liu.se>
+
+	From Daiki Ueno:
+	* drbg-ctr-aes256.c (drbg_ctr_aes256_update): Change argument list
+	to take use a struct drbg_ctr_aes256_ctx, and make non-static.
+	Update callers.
+	* drbg-ctr.h (drbg_ctr_aes256_update): Declare it.
+	* nettle.texinfo (Randomness): Update documentation.
+
 2026-01-29  Niels Möller  <nisse@lysator.liu.se>
 
 	* testsuite/testutils.h (struct tstring): Change traditional
