@@ -6263,6 +6263,7 @@ Initialize the DRBG-CTR-AES256 context using
 @deftypefun void drbg_ctr_aes256_random (struct drbg_ctr_aes256_ctx *@var{ctx}, size_t n, uint8_t *@var{dst})
 Generates @var{n} octets of output into @var{dst}.  The generator must
 be initialized before you call this function.
+@end deftypefun
 
 @deftypefun void drbg_ctr_aes256_update (struct drbg_ctr_aes256_ctx *@var{ctx}, const uint8_t *@var{provided_data})
 Updates the internal state of @var{ctx} with @var{provided_data},
