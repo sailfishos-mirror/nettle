@@ -648,8 +648,9 @@ distdir: $(DISTFILES)
 	  mkdir "$$sd" && $(MAKE) -C $$d distdir="`cd $$sd && pwd`" $@ ; \
 	done
 
+TAR_OPTIONS = --owner=0 --group=0 --numeric-owner --sort=name --mode=go+u,go-w --format=ustar
 dist: distdir
-	tar cf - $(distdir) | gzip -c >$(distdir).tar.gz	
+	TAR_OPTIONS="$(TAR_OPTIONS)" tar cf - $(distdir) | gzip -c >$(distdir).tar.gz
 	rm -rf $(distdir)
 
 rm_distcheck = test ! -d distcheck-tmp \
