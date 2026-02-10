@@ -36,8 +36,14 @@
 #include "drbg-ctr.h"
 
 static void
+random_undefined (struct drbg_ctr_aes256_ctx *ctx, size_t size, uint8_t *dst)
+{
+  drbg_ctr_aes256_random (ctx, size, dst);
+  mark_bytes_undefined (size, dst);
+}
+
+static void
 test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
-	     nettle_random_func * rngfun,
 	     const uint8_t * xpk, const uint8_t * xsk,
 	     const uint8_t * xct, const uint8_t * xk)
 {
@@ -47,7 +53,7 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
   uint8_t k1[SNTRUP761_SIZE];
   uint8_t k2[SNTRUP761_SIZE];
 
-  sntrup761_keypair (pk, sk, rngctx, rngfun);
+  sntrup761_keypair (pk, sk, rngctx, (nettle_random_func *) drbg_ctr_aes256_random);
 
   if (!MEMEQ (SNTRUP761_PUBLICKEY_SIZE, pk, xpk)
       || !MEMEQ (SNTRUP761_SECRETKEY_SIZE, sk, xsk))
@@ -59,8 +65,9 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
       abort ();
     }
 
-  sntrup761_enc (ct, k1, pk, rngctx, rngfun);
-
+  sntrup761_enc (ct, k1, pk, rngctx, (nettle_random_func *) random_undefined);
+  mark_bytes_defined (sizeof (ct), ct);
+  mark_bytes_defined (sizeof (k1), k1);
   if (!MEMEQ (SNTRUP761_CIPHERTEXT_SIZE, ct, xct)
       || !MEMEQ (SNTRUP761_SIZE, k1, xk))
     {
@@ -70,8 +77,9 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
       print_hex (sizeof k1, k1);
       abort ();
     }
-
+  mark_bytes_undefined (sizeof (sk), sk);
   sntrup761_dec (k2, ct, sk);
+  mark_bytes_defined (sizeof (k2), k2);
 
   if (!MEMEQ (SNTRUP761_SIZE, k2, xk))
     {
@@ -97,7 +105,7 @@ test_main (void)
   drbg_ctr_aes256_init (&rng,
 			H ("061550234D158C5EC95595FE04EF7A25767F2E24CC2BC479"
 			   "D09D86DC9ABCFDE7056A8C266F9EF97ED08541DBD2E1FFA1"));
-  test_sntrup (&rng, (nettle_random_func *) drbg_ctr_aes256_random,
+  test_sntrup (&rng,
 	       H ("36C969CF1008A6AA9551A784941C65A9BF68C2DC33FA36B5"
 		  "D266B25171B346679F2D22BF3123A79C790D6DEC68E1BC44"
 		  "420A6824F5357C78E3C336FEE0551E620DCB975F563682A3"
@@ -271,7 +279,7 @@ test_main (void)
   drbg_ctr_aes256_init (&rng,
 			H ("D81C4D8D734FCBFBEADE3D3F8A039FAA2A2C9957E835AD55"
 			   "B22E75BF57BB556AC81ADDE6AEEB4A5A875C3BFCADFA958F"));
-  test_sntrup (&rng, (nettle_random_func *) drbg_ctr_aes256_random,
+  test_sntrup (&rng,
 	       H ("D2530F125EE5F208B1976A66BCBC917161F6929E636BA8C7"
 		  "3470DE18065F6057528D718744E9248DFFF6BB55C188CEAC"
 		  "B9419863C3C456B46A21354834ADA6B2132C67747C9EE70D"
