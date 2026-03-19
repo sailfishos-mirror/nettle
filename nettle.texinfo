@@ -5730,6 +5730,21 @@ the message first and pass the short message digest as input to the sign
 and verify functions, however, the resilience to hash collision is then
 lost.
 
+One subtle detail is that the public key is prepended to the message in
+the signature process, but the public key is @emph{not} included in the
+nonce generation. For this reason, it is essential that the @var{pub}
+argument to @code{ed25519_sha512_sign} and @code{ed448_shake256_sign} is
+always the same as the output of
+@code{ed25519_sha512_public_key}/@code{ed448_shake256_public_key}. If
+one ever signs the same message twice using the same private key but
+with two different values for the @var{pub} input, enough private
+information is leaked to let an attacker forge signatures.
+
+For best performance, it is preferable to compute the public key only
+once, when the keypair is generated. It should then be stored together
+with the private key so that it cannot be tampered with, to ensure that
+the same, correct, value is available for every signing operation.
+
 @defvr Constant ED25519_KEY_SIZE
 The size of a private or public Ed25519 key, 32 octets.
 @end defvr

@@ -1,3 +1,9 @@
+2026-03-19  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle.texinfo (Curve 25519 and Curve 448): Document that one
+	must be careful and always pass the correct public key as input to
+	the signing functons.
+
 2026-02-05  Niels Möller  <nisse@lysator.liu.se>
 
 	* Released Nettle-4.0.
