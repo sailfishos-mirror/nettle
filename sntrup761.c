@@ -46,7 +46,7 @@
 #include "sha2.h"
 
 static void
-crypto_hash_sha512 (unsigned char *out, const unsigned char *in, int inlen)
+crypto_hash_sha512 (uint8_t *out, const uint8_t *in, int inlen)
 {
   struct sha512_ctx ctx;
 
@@ -249,7 +249,7 @@ int32_mod_uint14 (int32_t x, uint16_t m)
 /* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.c */
 
 static void
-Decode (uint16_t * out, const unsigned char *S, const uint16_t * M,
+Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
 	long long len)
 {
   if (len == 1)
@@ -320,7 +320,7 @@ Decode (uint16_t * out, const unsigned char *S, const uint16_t * M,
 
 /* 0 <= R[i] < M[i] < 16384 */
 static void
-Encode (unsigned char *out, const uint16_t * R, const uint16_t * M,
+Encode (uint8_t *out, const uint16_t * R, const uint16_t * M,
 	long long len)
 {
   if (len == 1)
@@ -690,10 +690,10 @@ Short_fromlist (small * out, const uint32_t * in)
 
 /* e.g., b = 0 means out = Hash0(in) */
 static void
-Hash_prefix (unsigned char *out, int b, const unsigned char *in, int inlen)
+Hash_prefix (uint8_t *out, int b, const uint8_t *in, int inlen)
 {
-  unsigned char x[inlen + 1];
-  unsigned char h[64];
+  uint8_t x[inlen + 1];
+  uint8_t h[64];
   int i;
 
   x[0] = b;
@@ -709,7 +709,7 @@ Hash_prefix (unsigned char *out, int b, const unsigned char *in, int inlen)
 static uint32_t
 urandom32 (void *random_ctx, nettle_random_func * random)
 {
-  unsigned char c[4];
+  uint8_t c[4];
   uint32_t out[4];
 
   random (random_ctx, 4, c);
@@ -801,7 +801,7 @@ Decrypt (small * r, const Fq * c, const small * f, const small * ginv)
 /* these are the only functions that rely on SNTRUP761_P mod 4 = 1 */
 
 static void
-Small_encode (unsigned char *s, const small * f)
+Small_encode (uint8_t *s, const small * f)
 {
   small x;
   int i;
@@ -819,9 +819,9 @@ Small_encode (unsigned char *s, const small * f)
 }
 
 static void
-Small_decode (small * f, const unsigned char *s)
+Small_decode (small * f, const uint8_t *s)
 {
-  unsigned char x;
+  uint8_t x;
   int i;
 
   for (i = 0; i < SNTRUP761_P / 4; ++i)
@@ -842,7 +842,7 @@ Small_decode (small * f, const unsigned char *s)
 /* ----- encoding general polynomials */
 
 static void
-Rq_encode (unsigned char *s, const Fq * r)
+Rq_encode (uint8_t *s, const Fq * r)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -855,7 +855,7 @@ Rq_encode (unsigned char *s, const Fq * r)
 }
 
 static void
-Rq_decode (Fq * r, const unsigned char *s)
+Rq_decode (Fq * r, const uint8_t *s)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -870,7 +870,7 @@ Rq_decode (Fq * r, const unsigned char *s)
 /* ----- encoding rounded polynomials */
 
 static void
-Rounded_encode (unsigned char *s, const Fq * r)
+Rounded_encode (uint8_t *s, const Fq * r)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -883,7 +883,7 @@ Rounded_encode (unsigned char *s, const Fq * r)
 }
 
 static void
-Rounded_decode (Fq * r, const unsigned char *s)
+Rounded_decode (Fq * r, const uint8_t *s)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -907,7 +907,7 @@ typedef small Inputs[SNTRUP761_P];	/* passed by reference */
 
 /* pk,sk = ZKeyGen() */
 static void
-ZKeyGen (unsigned char *pk, unsigned char *sk, void *random_ctx,
+ZKeyGen (uint8_t *pk, uint8_t *sk, void *random_ctx,
 	 nettle_random_func * random)
 {
   Fq h[SNTRUP761_P];
@@ -922,7 +922,7 @@ ZKeyGen (unsigned char *pk, unsigned char *sk, void *random_ctx,
 
 /* C = ZEncrypt(r,pk) */
 static void
-ZEncrypt (unsigned char *C, const Inputs r, const unsigned char *pk)
+ZEncrypt (uint8_t *C, const Inputs r, const uint8_t *pk)
 {
   Fq h[SNTRUP761_P];
   Fq c[SNTRUP761_P];
@@ -933,7 +933,7 @@ ZEncrypt (unsigned char *C, const Inputs r, const unsigned char *pk)
 
 /* r = ZDecrypt(C,sk) */
 static void
-ZDecrypt (Inputs r, const unsigned char *C, const unsigned char *sk)
+ZDecrypt (Inputs r, const uint8_t *C, const uint8_t *sk)
 {
   small f[SNTRUP761_P], v[SNTRUP761_P];
   Fq c[SNTRUP761_P];
@@ -951,10 +951,10 @@ ZDecrypt (Inputs r, const unsigned char *C, const unsigned char *sk)
 
 /* h = HashConfirm(r,pk,cache); cache is Hash4(pk) */
 static void
-HashConfirm (unsigned char *h, const unsigned char *r,
-	     /* const unsigned char *pk, */ const unsigned char *cache)
+HashConfirm (uint8_t *h, const uint8_t *r,
+	     /* const uint8_t *pk, */ const uint8_t *cache)
 {
-  unsigned char x[Hash_bytes * 2];
+  uint8_t x[Hash_bytes * 2];
   int i;
 
   Hash_prefix (x, 3, r, Inputs_bytes);
@@ -967,10 +967,10 @@ HashConfirm (unsigned char *h, const unsigned char *r,
 
 /* k = HashSession(b,y,z) */
 static void
-HashSession (unsigned char *k, int b, const unsigned char *y,
-	     const unsigned char *z)
+HashSession (uint8_t *k, int b, const uint8_t *y,
+	     const uint8_t *z)
 {
-  unsigned char x[Hash_bytes + Ciphertexts_bytes + Confirm_bytes];
+  uint8_t x[Hash_bytes + Ciphertexts_bytes + Confirm_bytes];
   int i;
 
   Hash_prefix (x, 3, y, Inputs_bytes);
@@ -983,7 +983,7 @@ HashSession (unsigned char *k, int b, const unsigned char *y,
 
 /* pk,sk = KEM_KeyGen() */
 void
-sntrup761_keypair (unsigned char *pk, unsigned char *sk, void *random_ctx,
+sntrup761_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
 		   nettle_random_func * random)
 {
   int i;
@@ -999,8 +999,8 @@ sntrup761_keypair (unsigned char *pk, unsigned char *sk, void *random_ctx,
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
 static void
-Hide (unsigned char *c, unsigned char *r_enc, const Inputs r,
-      const unsigned char *pk, const unsigned char *cache)
+Hide (uint8_t *c, uint8_t *r_enc, const Inputs r,
+      const uint8_t *pk, const uint8_t *cache)
 {
   Inputs_encode (r_enc, r);
   ZEncrypt (c, r, pk);
@@ -1010,12 +1010,12 @@ Hide (unsigned char *c, unsigned char *r_enc, const Inputs r,
 
 /* c,k = Encap(pk) */
 void
-sntrup761_enc (unsigned char *c, unsigned char *k, const unsigned char *pk,
+sntrup761_enc (uint8_t *c, uint8_t *k, const uint8_t *pk,
 	       void *random_ctx, nettle_random_func * random)
 {
   Inputs r;
-  unsigned char r_enc[Inputs_bytes];
-  unsigned char cache[Hash_bytes];
+  uint8_t r_enc[Inputs_bytes];
+  uint8_t cache[Hash_bytes];
 
   Hash_prefix (cache, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
   Inputs_random (r, random_ctx, random);
@@ -1025,7 +1025,7 @@ sntrup761_enc (unsigned char *c, unsigned char *k, const unsigned char *pk,
 
 /* 0 if matching ciphertext+confirm, else -1 */
 static int
-Ciphertexts_diff_mask (const unsigned char *c, const unsigned char *c2)
+Ciphertexts_diff_mask (const uint8_t *c, const uint8_t *c2)
 {
   uint16_t differentbits = 0;
   int len = Ciphertexts_bytes + Confirm_bytes;
@@ -1037,14 +1037,14 @@ Ciphertexts_diff_mask (const unsigned char *c, const unsigned char *c2)
 
 /* k = Decap(c,sk) */
 void
-sntrup761_dec (unsigned char *k, const unsigned char *c, const unsigned char *sk)
+sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk)
 {
-  const unsigned char *pk = sk + SecretKeys_bytes;
-  const unsigned char *rho = pk + SNTRUP761_PUBLICKEY_SIZE;
-  const unsigned char *cache = rho + Inputs_bytes;
+  const uint8_t *pk = sk + SecretKeys_bytes;
+  const uint8_t *rho = pk + SNTRUP761_PUBLICKEY_SIZE;
+  const uint8_t *cache = rho + Inputs_bytes;
   Inputs r;
-  unsigned char r_enc[Inputs_bytes];
-  unsigned char cnew[Ciphertexts_bytes + Confirm_bytes];
+  uint8_t r_enc[Inputs_bytes];
+  uint8_t cnew[Ciphertexts_bytes + Confirm_bytes];
   int mask;
   int i;
 
