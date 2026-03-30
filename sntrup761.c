@@ -236,7 +236,7 @@ int32_mod_uint14 (int32_t x, uint16_t m)
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/paramsmenu.h */
 #define SNTRUP761_P 761
-#define q 4591
+#define SNTRUP761_Q 4591
 #define Rounded_bytes 1007
 #define Rq_bytes 1158
 #define w 286
@@ -405,16 +405,16 @@ F3_freeze (int16_t x)
 
 /* ----- arithmetic mod q */
 
-#define q12 ((q-1)/2)
+#define SNTRUP761_Q12 ((SNTRUP761_Q-1)/2)
 typedef int16_t Fq;
-/* always represented as -q12...q12 */
+/* always represented as -(q-1)/2...(q-1)/2 */
 /* so ZZ_fromFq is a no-op */
 
 /* x must not be close to top int32 */
 static Fq
 Fq_freeze (int32_t x)
 {
-  return int32_mod_uint14 (x + q12, q) - q12;
+  return int32_mod_uint14 (x + SNTRUP761_Q12, SNTRUP761_Q) - SNTRUP761_Q12;
 }
 
 static Fq
@@ -423,7 +423,7 @@ Fq_recip (Fq a1)
   int i = 1;
   Fq ai = a1;
 
-  while (i < q - 2)
+  while (i < SNTRUP761_Q - 2)
     {
       ai = Fq_freeze (a1 * (int32_t) ai);
       i += 1;
@@ -849,9 +849,9 @@ Rq_encode (unsigned char *s, const Fq * r)
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    R[i] = r[i] + q12;
+    R[i] = r[i] + SNTRUP761_Q12;
   for (i = 0; i < SNTRUP761_P; ++i)
-    M[i] = q;
+    M[i] = SNTRUP761_Q;
   Encode (s, R, M, SNTRUP761_P);
 }
 
@@ -862,10 +862,10 @@ Rq_decode (Fq * r, const unsigned char *s)
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    M[i] = q;
+    M[i] = SNTRUP761_Q;
   Decode (R, s, M, SNTRUP761_P);
   for (i = 0; i < SNTRUP761_P; ++i)
-    r[i] = ((Fq) R[i]) - q12;
+    r[i] = ((Fq) R[i]) - SNTRUP761_Q12;
 }
 
 /* ----- encoding rounded polynomials */
@@ -877,9 +877,9 @@ Rounded_encode (unsigned char *s, const Fq * r)
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    R[i] = ((r[i] + q12) * 10923) >> 15;
+    R[i] = ((r[i] + SNTRUP761_Q12) * 10923) >> 15;
   for (i = 0; i < SNTRUP761_P; ++i)
-    M[i] = (q + 2) / 3;
+    M[i] = (SNTRUP761_Q + 2) / 3;
   Encode (s, R, M, SNTRUP761_P);
 }
 
@@ -890,10 +890,10 @@ Rounded_decode (Fq * r, const unsigned char *s)
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    M[i] = (q + 2) / 3;
+    M[i] = (SNTRUP761_Q + 2) / 3;
   Decode (R, s, M, SNTRUP761_P);
   for (i = 0; i < SNTRUP761_P; ++i)
-    r[i] = R[i] * 3 - q12;
+    r[i] = R[i] * 3 - SNTRUP761_Q12;
 }
 
 /* ----- Streamlined NTRU Prime Core plus encoding */
