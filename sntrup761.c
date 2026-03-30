@@ -238,7 +238,6 @@ int32_mod_uint14 (int32_t x, uint16_t m)
 #define SNTRUP761_P 761
 #define SNTRUP761_Q 4591
 #define Rounded_bytes 1007
-#define Rq_bytes 1158
 #define SNTRUP761_W 286
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.h */
@@ -905,7 +904,6 @@ typedef small Inputs[SNTRUP761_P];	/* passed by reference */
 
 #define Ciphertexts_bytes Rounded_bytes
 #define SecretKeys_bytes (2*Small_bytes)
-#define PublicKeys_bytes Rq_bytes
 
 /* pk,sk = ZKeyGen() */
 static void
@@ -992,11 +990,11 @@ sntrup761_keypair (unsigned char *pk, unsigned char *sk, void *random_ctx,
 
   ZKeyGen (pk, sk, random_ctx, random);
   sk += SecretKeys_bytes;
-  for (i = 0; i < PublicKeys_bytes; ++i)
+  for (i = 0; i < SNTRUP761_PUBLICKEY_SIZE; ++i)
     *sk++ = pk[i];
   random (random_ctx, Inputs_bytes, sk);
   sk += Inputs_bytes;
-  Hash_prefix (sk, 4, pk, PublicKeys_bytes);
+  Hash_prefix (sk, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
 }
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
@@ -1019,7 +1017,7 @@ sntrup761_enc (unsigned char *c, unsigned char *k, const unsigned char *pk,
   unsigned char r_enc[Inputs_bytes];
   unsigned char cache[Hash_bytes];
 
-  Hash_prefix (cache, 4, pk, PublicKeys_bytes);
+  Hash_prefix (cache, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
   Inputs_random (r, random_ctx, random);
   Hide (c, r_enc, r, pk, cache);
   HashSession (k, 1, r_enc, c);
@@ -1042,7 +1040,7 @@ void
 sntrup761_dec (unsigned char *k, const unsigned char *c, const unsigned char *sk)
 {
   const unsigned char *pk = sk + SecretKeys_bytes;
-  const unsigned char *rho = pk + PublicKeys_bytes;
+  const unsigned char *rho = pk + SNTRUP761_PUBLICKEY_SIZE;
   const unsigned char *cache = rho + Inputs_bytes;
   Inputs r;
   unsigned char r_enc[Inputs_bytes];
