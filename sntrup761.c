@@ -41,19 +41,11 @@
 #include "config.h"
 #endif
 
+#include <string.h>
+
 #include "sntrup761.h"
 
 #include "sha2.h"
-
-static void
-crypto_hash_sha512 (uint8_t *out, const uint8_t *in, int inlen)
-{
-  struct sha512_ctx ctx;
-
-  sha512_init (&ctx);
-  sha512_update (&ctx, inlen, in);
-  sha512_digest (&ctx, out);
-}
 
 #define uint32_MINMAX(a,b) \
 do { \
@@ -686,22 +678,20 @@ Short_fromlist (small * out, const uint32_t * in)
 
 /* ----- underlying hash function */
 
-#define Hash_bytes 32
+#define HASH_SIZE 32
 
 /* e.g., b = 0 means out = Hash0(in) */
 static void
-Hash_prefix (uint8_t *out, int b, const uint8_t *in, int inlen)
+Hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen)
 {
-  uint8_t x[inlen + 1];
-  uint8_t h[64];
-  int i;
+  struct sha512_ctx ctx;
+  uint8_t h[SHA512_DIGEST_SIZE];
 
-  x[0] = b;
-  for (i = 0; i < inlen; ++i)
-    x[i + 1] = in[i];
-  crypto_hash_sha512 (h, x, inlen + 1);
-  for (i = 0; i < 32; ++i)
-    out[i] = h[i];
+  sha512_init (&ctx);
+  sha512_update (&ctx, 1, &b);
+  sha512_update (&ctx, inlen, in);
+  sha512_digest (&ctx, h);
+  memcpy (out, h, HASH_SIZE);
 }
 
 /* ----- higher-level randomness */
@@ -954,12 +944,12 @@ static void
 HashConfirm (uint8_t *h, const uint8_t *r,
 	     /* const uint8_t *pk, */ const uint8_t *cache)
 {
-  uint8_t x[Hash_bytes * 2];
+  uint8_t x[HASH_SIZE * 2];
   int i;
 
   Hash_prefix (x, 3, r, Inputs_bytes);
-  for (i = 0; i < Hash_bytes; ++i)
-    x[Hash_bytes + i] = cache[i];
+  for (i = 0; i < HASH_SIZE; ++i)
+    x[HASH_SIZE + i] = cache[i];
   Hash_prefix (h, 2, x, sizeof x);
 }
 
@@ -967,15 +957,15 @@ HashConfirm (uint8_t *h, const uint8_t *r,
 
 /* k = HashSession(b,y,z) */
 static void
-HashSession (uint8_t *k, int b, const uint8_t *y,
+HashSession (uint8_t *k, uint8_t b, const uint8_t *y,
 	     const uint8_t *z)
 {
-  uint8_t x[Hash_bytes + Ciphertexts_bytes + Confirm_bytes];
+  uint8_t x[HASH_SIZE + Ciphertexts_bytes + Confirm_bytes];
   int i;
 
   Hash_prefix (x, 3, y, Inputs_bytes);
   for (i = 0; i < Ciphertexts_bytes + Confirm_bytes; ++i)
-    x[Hash_bytes + i] = z[i];
+    x[HASH_SIZE + i] = z[i];
   Hash_prefix (k, b, x, sizeof x);
 }
 
@@ -1015,7 +1005,7 @@ sntrup761_enc (uint8_t *c, uint8_t *k, const uint8_t *pk,
 {
   Inputs r;
   uint8_t r_enc[Inputs_bytes];
-  uint8_t cache[Hash_bytes];
+  uint8_t cache[HASH_SIZE];
 
   Hash_prefix (cache, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
   Inputs_random (r, random_ctx, random);
