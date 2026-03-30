@@ -239,7 +239,7 @@ int32_mod_uint14 (int32_t x, uint16_t m)
 #define SNTRUP761_Q 4591
 #define Rounded_bytes 1007
 #define Rq_bytes 1158
-#define w 286
+#define SNTRUP761_W 286
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.h */
 
@@ -442,7 +442,7 @@ Weightw_mask (small * r)
 
   for (i = 0; i < SNTRUP761_P; ++i)
     weight += r[i] & 1;
-  return int16_t_nonzero_mask (weight - w);
+  return int16_t_nonzero_mask (weight - SNTRUP761_W);
 }
 
 /* R3_fromR(R_fromRq(r)) */
@@ -676,9 +676,9 @@ Short_fromlist (small * out, const uint32_t * in)
   uint32_t L[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < w; ++i)
+  for (i = 0; i < SNTRUP761_W; ++i)
     L[i] = in[i] & (uint32_t) - 2;
-  for (i = w; i < SNTRUP761_P; ++i)
+  for (i = SNTRUP761_W; i < SNTRUP761_P; ++i)
     L[i] = (in[i] & (uint32_t) - 3) | 1;
   crypto_sort_uint32 (L, SNTRUP761_P);
   for (i = 0; i < SNTRUP761_P; ++i)
@@ -788,10 +788,10 @@ Decrypt (small * r, const Fq * c, const small * f, const small * ginv)
   R3_fromRq (e, cf3);
   R3_mult (ev, e, ginv);
 
-  mask = Weightw_mask (ev);	/* 0 if weight w, else -1 */
-  for (i = 0; i < w; ++i)
+  mask = Weightw_mask (ev);	/* 0 if weight SNTRUP761_W, else -1 */
+  for (i = 0; i < SNTRUP761_W; ++i)
     r[i] = ((ev[i] ^ 1) & ~mask) ^ 1;
-  for (i = w; i < SNTRUP761_P; ++i)
+  for (i = SNTRUP761_W; i < SNTRUP761_P; ++i)
     r[i] = ev[i] & ~mask;
 }
 
