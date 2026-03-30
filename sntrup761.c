@@ -235,7 +235,7 @@ int32_mod_uint14 (int32_t x, uint16_t m)
 }
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/paramsmenu.h */
-#define p 761
+#define SNTRUP761_P 761
 #define q 4591
 #define Rounded_bytes 1007
 #define Rq_bytes 1158
@@ -440,7 +440,7 @@ Weightw_mask (small * r)
   int weight = 0;
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     weight += r[i] & 1;
   return int16_t_nonzero_mask (weight - w);
 }
@@ -450,7 +450,7 @@ static void
 R3_fromRq (small * out, const Fq * r)
 {
   int i;
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = F3_freeze (r[i]);
 }
 
@@ -458,32 +458,32 @@ R3_fromRq (small * out, const Fq * r)
 static void
 R3_mult (small * h, const small * f, const small * g)
 {
-  small fg[p + p - 1];
+  small fg[SNTRUP761_P + SNTRUP761_P - 1];
   small result;
   int i, j;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     {
       result = 0;
       for (j = 0; j <= i; ++j)
 	result = F3_freeze (result + f[j] * g[i - j]);
       fg[i] = result;
     }
-  for (i = p; i < p + p - 1; ++i)
+  for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; ++i)
     {
       result = 0;
-      for (j = i - p + 1; j < p; ++j)
+      for (j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
 	result = F3_freeze (result + f[j] * g[i - j]);
       fg[i] = result;
     }
 
-  for (i = p + p - 2; i >= p; --i)
+  for (i = SNTRUP761_P + SNTRUP761_P - 2; i >= SNTRUP761_P; --i)
     {
-      fg[i - p] = F3_freeze (fg[i - p] + fg[i]);
-      fg[i - p + 1] = F3_freeze (fg[i - p + 1] + fg[i]);
+      fg[i - SNTRUP761_P] = F3_freeze (fg[i - SNTRUP761_P] + fg[i]);
+      fg[i - SNTRUP761_P + 1] = F3_freeze (fg[i - SNTRUP761_P + 1] + fg[i]);
     }
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     h[i] = fg[i];
 }
 
@@ -491,28 +491,28 @@ R3_mult (small * h, const small * f, const small * g)
 static int
 R3_recip (small * out, const small * in)
 {
-  small f[p + 1], g[p + 1], v[p + 1], r[p + 1];
+  small f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
   int i, loop, delta;
   int sign, swap, t;
 
-  for (i = 0; i < p + 1; ++i)
+  for (i = 0; i < SNTRUP761_P + 1; ++i)
     v[i] = 0;
-  for (i = 0; i < p + 1; ++i)
+  for (i = 0; i < SNTRUP761_P + 1; ++i)
     r[i] = 0;
   r[0] = 1;
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     f[i] = 0;
   f[0] = 1;
-  f[p - 1] = f[p] = -1;
-  for (i = 0; i < p; ++i)
-    g[p - 1 - i] = in[i];
-  g[p] = 0;
+  f[SNTRUP761_P - 1] = f[SNTRUP761_P] = -1;
+  for (i = 0; i < SNTRUP761_P; ++i)
+    g[SNTRUP761_P - 1 - i] = in[i];
+  g[SNTRUP761_P] = 0;
 
   delta = 1;
 
-  for (loop = 0; loop < 2 * p - 1; ++loop)
+  for (loop = 0; loop < 2 * SNTRUP761_P - 1; ++loop)
     {
-      for (i = p; i > 0; --i)
+      for (i = SNTRUP761_P; i > 0; --i)
 	v[i] = v[i - 1];
       v[0] = 0;
 
@@ -521,7 +521,7 @@ R3_recip (small * out, const small * in)
       delta ^= swap & (delta ^ -delta);
       delta += 1;
 
-      for (i = 0; i < p + 1; ++i)
+      for (i = 0; i < SNTRUP761_P + 1; ++i)
 	{
 	  t = swap & (f[i] ^ g[i]);
 	  f[i] ^= t;
@@ -531,19 +531,19 @@ R3_recip (small * out, const small * in)
 	  r[i] ^= t;
 	}
 
-      for (i = 0; i < p + 1; ++i)
+      for (i = 0; i < SNTRUP761_P + 1; ++i)
 	g[i] = F3_freeze (g[i] + sign * f[i]);
-      for (i = 0; i < p + 1; ++i)
+      for (i = 0; i < SNTRUP761_P + 1; ++i)
 	r[i] = F3_freeze (r[i] + sign * v[i]);
 
-      for (i = 0; i < p; ++i)
+      for (i = 0; i < SNTRUP761_P; ++i)
 	g[i] = g[i + 1];
-      g[p] = 0;
+      g[SNTRUP761_P] = 0;
     }
 
   sign = f[0];
-  for (i = 0; i < p; ++i)
-    out[i] = sign * v[p - 1 - i];
+  for (i = 0; i < SNTRUP761_P; ++i)
+    out[i] = sign * v[SNTRUP761_P - 1 - i];
 
   return int16_t_nonzero_mask (delta);
 }
@@ -554,32 +554,32 @@ R3_recip (small * out, const small * in)
 static void
 Rq_mult_small (Fq * h, const Fq * f, const small * g)
 {
-  Fq fg[p + p - 1];
+  Fq fg[SNTRUP761_P + SNTRUP761_P - 1];
   Fq result;
   int i, j;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     {
       result = 0;
       for (j = 0; j <= i; ++j)
 	result = Fq_freeze (result + f[j] * (int32_t) g[i - j]);
       fg[i] = result;
     }
-  for (i = p; i < p + p - 1; ++i)
+  for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; ++i)
     {
       result = 0;
-      for (j = i - p + 1; j < p; ++j)
+      for (j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
 	result = Fq_freeze (result + f[j] * (int32_t) g[i - j]);
       fg[i] = result;
     }
 
-  for (i = p + p - 2; i >= p; --i)
+  for (i = SNTRUP761_P + SNTRUP761_P - 2; i >= SNTRUP761_P; --i)
     {
-      fg[i - p] = Fq_freeze (fg[i - p] + fg[i]);
-      fg[i - p + 1] = Fq_freeze (fg[i - p + 1] + fg[i]);
+      fg[i - SNTRUP761_P] = Fq_freeze (fg[i - SNTRUP761_P] + fg[i]);
+      fg[i - SNTRUP761_P + 1] = Fq_freeze (fg[i - SNTRUP761_P + 1] + fg[i]);
     }
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     h[i] = fg[i];
 }
 
@@ -589,7 +589,7 @@ Rq_mult3 (Fq * h, const Fq * f)
 {
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     h[i] = Fq_freeze (3 * f[i]);
 }
 
@@ -598,30 +598,30 @@ Rq_mult3 (Fq * h, const Fq * f)
 static int
 Rq_recip3 (Fq * out, const small * in)
 {
-  Fq f[p + 1], g[p + 1], v[p + 1], r[p + 1];
+  Fq f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
   int i, loop, delta;
   int swap, t;
   int32_t f0, g0;
   Fq scale;
 
-  for (i = 0; i < p + 1; ++i)
+  for (i = 0; i < SNTRUP761_P + 1; ++i)
     v[i] = 0;
-  for (i = 0; i < p + 1; ++i)
+  for (i = 0; i < SNTRUP761_P + 1; ++i)
     r[i] = 0;
   r[0] = Fq_recip (3);
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     f[i] = 0;
   f[0] = 1;
-  f[p - 1] = f[p] = -1;
-  for (i = 0; i < p; ++i)
-    g[p - 1 - i] = in[i];
-  g[p] = 0;
+  f[SNTRUP761_P - 1] = f[SNTRUP761_P] = -1;
+  for (i = 0; i < SNTRUP761_P; ++i)
+    g[SNTRUP761_P - 1 - i] = in[i];
+  g[SNTRUP761_P] = 0;
 
   delta = 1;
 
-  for (loop = 0; loop < 2 * p - 1; ++loop)
+  for (loop = 0; loop < 2 * SNTRUP761_P - 1; ++loop)
     {
-      for (i = p; i > 0; --i)
+      for (i = SNTRUP761_P; i > 0; --i)
 	v[i] = v[i - 1];
       v[0] = 0;
 
@@ -629,7 +629,7 @@ Rq_recip3 (Fq * out, const small * in)
       delta ^= swap & (delta ^ -delta);
       delta += 1;
 
-      for (i = 0; i < p + 1; ++i)
+      for (i = 0; i < SNTRUP761_P + 1; ++i)
 	{
 	  t = swap & (f[i] ^ g[i]);
 	  f[i] ^= t;
@@ -641,19 +641,19 @@ Rq_recip3 (Fq * out, const small * in)
 
       f0 = f[0];
       g0 = g[0];
-      for (i = 0; i < p + 1; ++i)
+      for (i = 0; i < SNTRUP761_P + 1; ++i)
 	g[i] = Fq_freeze (f0 * g[i] - g0 * f[i]);
-      for (i = 0; i < p + 1; ++i)
+      for (i = 0; i < SNTRUP761_P + 1; ++i)
 	r[i] = Fq_freeze (f0 * r[i] - g0 * v[i]);
 
-      for (i = 0; i < p; ++i)
+      for (i = 0; i < SNTRUP761_P; ++i)
 	g[i] = g[i + 1];
-      g[p] = 0;
+      g[SNTRUP761_P] = 0;
     }
 
   scale = Fq_recip (f[0]);
-  for (i = 0; i < p; ++i)
-    out[i] = Fq_freeze (scale * (int32_t) v[p - 1 - i]);
+  for (i = 0; i < SNTRUP761_P; ++i)
+    out[i] = Fq_freeze (scale * (int32_t) v[SNTRUP761_P - 1 - i]);
 
   return int16_t_nonzero_mask (delta);
 }
@@ -664,7 +664,7 @@ static void
 Round (Fq * out, const Fq * a)
 {
   int i;
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = a[i] - F3_freeze (a[i]);
 }
 
@@ -673,15 +673,15 @@ Round (Fq * out, const Fq * a)
 static void
 Short_fromlist (small * out, const uint32_t * in)
 {
-  uint32_t L[p];
+  uint32_t L[SNTRUP761_P];
   int i;
 
   for (i = 0; i < w; ++i)
     L[i] = in[i] & (uint32_t) - 2;
-  for (i = w; i < p; ++i)
+  for (i = w; i < SNTRUP761_P; ++i)
     L[i] = (in[i] & (uint32_t) - 3) | 1;
-  crypto_sort_uint32 (L, p);
-  for (i = 0; i < p; ++i)
+  crypto_sort_uint32 (L, SNTRUP761_P);
+  for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = (L[i] & 3) - 1;
 }
 
@@ -724,10 +724,10 @@ urandom32 (void *random_ctx, nettle_random_func * random)
 static void
 Short_random (small * out, void *random_ctx, nettle_random_func * random)
 {
-  uint32_t L[p];
+  uint32_t L[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     L[i] = urandom32 (random_ctx, random);
   Short_fromlist (out, L);
 }
@@ -737,7 +737,7 @@ Small_random (small * out, void *random_ctx, nettle_random_func * random)
 {
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = (((urandom32 (random_ctx, random) & 0x3fffffff) * 3) >> 30) - 1;
 }
 
@@ -748,8 +748,8 @@ static void
 KeyGen (Fq * h, small * f, small * ginv, void *random_ctx,
 	nettle_random_func * random)
 {
-  small g[p];
-  Fq finv[p];
+  small g[SNTRUP761_P];
+  Fq finv[SNTRUP761_P];
 
   for (;;)
     {
@@ -766,7 +766,7 @@ KeyGen (Fq * h, small * f, small * ginv, void *random_ctx,
 static void
 Encrypt (Fq * c, const small * r, const Fq * h)
 {
-  Fq hr[p];
+  Fq hr[SNTRUP761_P];
 
   Rq_mult_small (hr, h, r);
   Round (c, hr);
@@ -776,10 +776,10 @@ Encrypt (Fq * c, const small * r, const Fq * h)
 static void
 Decrypt (small * r, const Fq * c, const small * f, const small * ginv)
 {
-  Fq cf[p];
-  Fq cf3[p];
-  small e[p];
-  small ev[p];
+  Fq cf[SNTRUP761_P];
+  Fq cf3[SNTRUP761_P];
+  small e[SNTRUP761_P];
+  small ev[SNTRUP761_P];
   int mask;
   int i;
 
@@ -791,15 +791,15 @@ Decrypt (small * r, const Fq * c, const small * f, const small * ginv)
   mask = Weightw_mask (ev);	/* 0 if weight w, else -1 */
   for (i = 0; i < w; ++i)
     r[i] = ((ev[i] ^ 1) & ~mask) ^ 1;
-  for (i = w; i < p; ++i)
+  for (i = w; i < SNTRUP761_P; ++i)
     r[i] = ev[i] & ~mask;
 }
 
 /* ----- encoding small polynomials (including short polynomials) */
 
-#define Small_bytes ((p+3)/4)
+#define Small_bytes ((SNTRUP761_P+3)/4)
 
-/* these are the only functions that rely on p mod 4 = 1 */
+/* these are the only functions that rely on SNTRUP761_P mod 4 = 1 */
 
 static void
 Small_encode (unsigned char *s, const small * f)
@@ -807,7 +807,7 @@ Small_encode (unsigned char *s, const small * f)
   small x;
   int i;
 
-  for (i = 0; i < p / 4; ++i)
+  for (i = 0; i < SNTRUP761_P / 4; ++i)
     {
       x = *f++ + 1;
       x += (*f++ + 1) << 2;
@@ -825,7 +825,7 @@ Small_decode (small * f, const unsigned char *s)
   unsigned char x;
   int i;
 
-  for (i = 0; i < p / 4; ++i)
+  for (i = 0; i < SNTRUP761_P / 4; ++i)
     {
       x = *s++;
       *f++ = ((small) (x & 3)) - 1;
@@ -845,26 +845,26 @@ Small_decode (small * f, const unsigned char *s)
 static void
 Rq_encode (unsigned char *s, const Fq * r)
 {
-  uint16_t R[p], M[p];
+  uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = r[i] + q12;
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     M[i] = q;
-  Encode (s, R, M, p);
+  Encode (s, R, M, SNTRUP761_P);
 }
 
 static void
 Rq_decode (Fq * r, const unsigned char *s)
 {
-  uint16_t R[p], M[p];
+  uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     M[i] = q;
-  Decode (R, s, M, p);
-  for (i = 0; i < p; ++i)
+  Decode (R, s, M, SNTRUP761_P);
+  for (i = 0; i < SNTRUP761_P; ++i)
     r[i] = ((Fq) R[i]) - q12;
 }
 
@@ -873,32 +873,32 @@ Rq_decode (Fq * r, const unsigned char *s)
 static void
 Rounded_encode (unsigned char *s, const Fq * r)
 {
-  uint16_t R[p], M[p];
+  uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = ((r[i] + q12) * 10923) >> 15;
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     M[i] = (q + 2) / 3;
-  Encode (s, R, M, p);
+  Encode (s, R, M, SNTRUP761_P);
 }
 
 static void
 Rounded_decode (Fq * r, const unsigned char *s)
 {
-  uint16_t R[p], M[p];
+  uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < p; ++i)
+  for (i = 0; i < SNTRUP761_P; ++i)
     M[i] = (q + 2) / 3;
-  Decode (R, s, M, p);
-  for (i = 0; i < p; ++i)
+  Decode (R, s, M, SNTRUP761_P);
+  for (i = 0; i < SNTRUP761_P; ++i)
     r[i] = R[i] * 3 - q12;
 }
 
 /* ----- Streamlined NTRU Prime Core plus encoding */
 
-typedef small Inputs[p];	/* passed by reference */
+typedef small Inputs[SNTRUP761_P];	/* passed by reference */
 #define Inputs_random Short_random
 #define Inputs_encode Small_encode
 #define Inputs_bytes Small_bytes
@@ -912,8 +912,8 @@ static void
 ZKeyGen (unsigned char *pk, unsigned char *sk, void *random_ctx,
 	 nettle_random_func * random)
 {
-  Fq h[p];
-  small f[p], v[p];
+  Fq h[SNTRUP761_P];
+  small f[SNTRUP761_P], v[SNTRUP761_P];
 
   KeyGen (h, f, v, random_ctx, random);
   Rq_encode (pk, h);
@@ -926,8 +926,8 @@ ZKeyGen (unsigned char *pk, unsigned char *sk, void *random_ctx,
 static void
 ZEncrypt (unsigned char *C, const Inputs r, const unsigned char *pk)
 {
-  Fq h[p];
-  Fq c[p];
+  Fq h[SNTRUP761_P];
+  Fq c[SNTRUP761_P];
   Rq_decode (h, pk);
   Encrypt (c, r, h);
   Rounded_encode (C, c);
@@ -937,8 +937,8 @@ ZEncrypt (unsigned char *C, const Inputs r, const unsigned char *pk)
 static void
 ZDecrypt (Inputs r, const unsigned char *C, const unsigned char *sk)
 {
-  small f[p], v[p];
-  Fq c[p];
+  small f[SNTRUP761_P], v[SNTRUP761_P];
+  Fq c[SNTRUP761_P];
 
   Small_decode (f, sk);
   sk += Small_bytes;
