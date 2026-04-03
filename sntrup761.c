@@ -404,8 +404,9 @@ static Fq
 Fq_freeze (int32_t x)
 {
   uint32_t ux, a, r, p, mask;
-  /* When called Rq_mult_small, inputs are limited to w*(q-1), but for
-     Fq_recip and Rq_recip3 inputs may be up to 2 q^2. */
+  /* When called from Rq_mult_small, inputs are limited to w*(q-1) (or
+     p*(q-1) for overweight inputs), but for Fq_recip and Rq_recip3
+     inputs may be up to 2 q^2, which is a larger range. */
   assert_maybe (x < 2*SNTRUP761_Q * SNTRUP761_Q);
   assert_maybe (x > -2*SNTRUP761_Q * SNTRUP761_Q);
   /* We want ((x + (q-1)/2) mod q) - (q-1)/2, but also add a multiple
@@ -556,33 +557,32 @@ R3_recip (small * out, const small * in)
 static void
 Rq_mult_small (Fq * h, const Fq * f, const small * g)
 {
-  Fq fg[SNTRUP761_P + SNTRUP761_P - 1];
-  Fq result;
+  int32_t fg[SNTRUP761_P + SNTRUP761_P - 1];
   int i, j;
 
   for (i = 0; i < SNTRUP761_P; ++i)
     {
-      result = 0;
-      for (j = 0; j <= i; ++j)
-	result = Fq_freeze (result + f[j] * (int32_t) g[i - j]);
+      int32_t result;
+      for (result = 0, j = 0; j <= i; ++j)
+	result +=  f[j] * (int32_t) g[i - j];
       fg[i] = result;
     }
   for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; ++i)
     {
-      result = 0;
-      for (j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
-	result = Fq_freeze (result + f[j] * (int32_t) g[i - j]);
+      int32_t result;
+      for (result = 0, j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
+	result += f[j] * (int32_t) g[i - j];
       fg[i] = result;
     }
 
   for (i = SNTRUP761_P + SNTRUP761_P - 2; i >= SNTRUP761_P; --i)
     {
-      fg[i - SNTRUP761_P] = Fq_freeze (fg[i - SNTRUP761_P] + fg[i]);
-      fg[i - SNTRUP761_P + 1] = Fq_freeze (fg[i - SNTRUP761_P + 1] + fg[i]);
+      fg[i - SNTRUP761_P] += fg[i];
+      fg[i - SNTRUP761_P + 1] += fg[i];
     }
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    h[i] = fg[i];
+    h[i] = Fq_freeze (fg[i]);
 }
 
 /* h = 3f in Rq */
