@@ -928,9 +928,6 @@ Rounded_decode (Fq * r, const uint8_t *s)
 /* ----- Streamlined NTRU Prime Core plus encoding */
 
 typedef small Inputs[SNTRUP761_P];	/* passed by reference */
-#define Inputs_random Short_random
-#define Inputs_encode Small_encode
-#define Inputs_bytes Small_bytes
 
 #define Ciphertexts_bytes Rounded_bytes
 #define SecretKeys_bytes (2*Small_bytes)
@@ -987,7 +984,7 @@ HashConfirm (uint8_t *h, const uint8_t *r,
   struct sha512_ctx ctx;
   uint8_t x[HASH_SIZE];
 
-  Hash_prefix (x, 3, r, Inputs_bytes);
+  Hash_prefix (x, 3, r, Small_bytes);
   hash_init (&ctx, 2);
   hash_update (&ctx, sizeof (x), x);
   hash_update (&ctx, HASH_SIZE, cache);
@@ -1004,7 +1001,7 @@ HashSession (uint8_t *k, uint8_t b, const uint8_t *y,
   struct sha512_ctx ctx;
   uint8_t x[HASH_SIZE];
 
-  Hash_prefix (x, 3, y, Inputs_bytes);
+  Hash_prefix (x, 3, y, Small_bytes);
   hash_init (&ctx, b);
   hash_update (&ctx, sizeof (x), x);
   hash_update (&ctx, Ciphertexts_bytes + Confirm_bytes, z);
@@ -1024,8 +1021,8 @@ sntrup761_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
   sk += SecretKeys_bytes;
   for (i = 0; i < SNTRUP761_PUBLICKEY_SIZE; ++i)
     *sk++ = pk[i];
-  random (random_ctx, Inputs_bytes, sk);
-  sk += Inputs_bytes;
+  random (random_ctx, Small_bytes, sk);
+  sk += Small_bytes;
   Hash_prefix (sk, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
 }
 
@@ -1034,7 +1031,7 @@ static void
 Hide (uint8_t *c, uint8_t *r_enc, const Inputs r,
       const uint8_t *pk, const uint8_t *cache)
 {
-  Inputs_encode (r_enc, r);
+  Small_encode (r_enc, r);
   ZEncrypt (c, r, pk);
   c += Ciphertexts_bytes;
   HashConfirm (c, r_enc, cache);
@@ -1046,11 +1043,11 @@ sntrup761_enc (uint8_t *c, uint8_t *k, const uint8_t *pk,
 	       void *random_ctx, nettle_random_func * random)
 {
   Inputs r;
-  uint8_t r_enc[Inputs_bytes];
+  uint8_t r_enc[Small_bytes];
   uint8_t cache[HASH_SIZE];
 
   Hash_prefix (cache, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
-  Inputs_random (r, random_ctx, random);
+  Short_random (r, random_ctx, random);
   Hide (c, r_enc, r, pk, cache);
   HashSession (k, 1, r_enc, c);
 }
@@ -1073,9 +1070,9 @@ sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk)
 {
   const uint8_t *pk = sk + SecretKeys_bytes;
   const uint8_t *rho = pk + SNTRUP761_PUBLICKEY_SIZE;
-  const uint8_t *cache = rho + Inputs_bytes;
+  const uint8_t *cache = rho + Small_bytes;
   Inputs r;
-  uint8_t r_enc[Inputs_bytes];
+  uint8_t r_enc[Small_bytes];
   uint8_t cnew[Ciphertexts_bytes + Confirm_bytes];
   int mask;
   int i;
@@ -1083,7 +1080,7 @@ sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk)
   ZDecrypt (r, c, sk);
   Hide (cnew, r_enc, r, pk, cache);
   mask = Ciphertexts_diff_mask (c, cnew);
-  for (i = 0; i < Inputs_bytes; ++i)
+  for (i = 0; i < Small_bytes; ++i)
     r_enc[i] ^= mask & (r_enc[i] ^ rho[i]);
   HashSession (k, 1 + mask, r_enc, c);
 }
