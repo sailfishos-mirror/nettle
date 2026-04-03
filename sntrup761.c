@@ -461,33 +461,32 @@ R3_fromRq (small * out, const Fq * r)
 static void
 R3_mult (small * h, const small * f, const small * g)
 {
-  small fg[SNTRUP761_P + SNTRUP761_P - 1];
-  small result;
+  int16_t fg[SNTRUP761_P + SNTRUP761_P - 1];
   int i, j;
 
   for (i = 0; i < SNTRUP761_P; ++i)
     {
-      result = 0;
-      for (j = 0; j <= i; ++j)
-	result = F3_freeze (result + f[j] * g[i - j]);
+      int16_t result;
+      for (result = 0, j = 0; j <= i; ++j)
+	result += f[j] * g[i - j];
       fg[i] = result;
     }
   for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; ++i)
     {
-      result = 0;
-      for (j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
-	result = F3_freeze (result + f[j] * g[i - j]);
+      int16_t result;
+      for (result = 0, j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
+	result += f[j] * g[i - j];
       fg[i] = result;
     }
 
   for (i = SNTRUP761_P + SNTRUP761_P - 2; i >= SNTRUP761_P; --i)
     {
-      fg[i - SNTRUP761_P] = F3_freeze (fg[i - SNTRUP761_P] + fg[i]);
-      fg[i - SNTRUP761_P + 1] = F3_freeze (fg[i - SNTRUP761_P + 1] + fg[i]);
+      fg[i - SNTRUP761_P] += + fg[i];
+      fg[i - SNTRUP761_P + 1] += fg[i];
     }
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    h[i] = fg[i];
+    h[i] = F3_freeze(fg[i]);
 }
 
 /* returns 0 if recip succeeded; else -1 */
