@@ -100,7 +100,8 @@ base64_encode_update(struct base64_encode_ctx *ctx,
 		     const uint8_t *src);
 
 /* DST should point to an area of size at least
- * BASE64_ENCODE_FINAL_LENGTH */
+ * BASE64_ENCODE_FINAL_LENGTH
+ * The return value is the number of output bytes generated.  */
 size_t
 base64_encode_final(struct base64_encode_ctx *ctx,
 		    char *dst);
@@ -149,7 +150,7 @@ base64_decode_single(struct base64_decode_ctx *ctx,
 
 /* Returns 1 on success, 0 on error. DST should point to an area of
  * size *DST_LENGTH. Decoding returns failure it output would exceed
- * this size. BASE64_DECODE_LENGTH(length) is always sufficient.
+ * this size. BASE64_DECODE_LENGTH(src_length) is always sufficient.
  * *DST_LENGTH is updated to reflect the amount of data actually
  * generated. */
 int

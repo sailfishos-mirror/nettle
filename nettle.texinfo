@@ -6333,7 +6333,7 @@ alphabet.
 @end deftypefun
 
 
-@deftypefun {size_t} base64_encode_single (struct base64_encode_ctx *@var{ctx}, uint8_t *@var{dst}, uint8_t @var{src})
+@deftypefun {size_t} base64_encode_single (struct base64_encode_ctx *@var{ctx}, char *@var{dst}, uint8_t @var{src})
 Encodes a single byte. Returns amount of output (always 1 or 2).
 @end deftypefun
 
@@ -6342,7 +6342,7 @@ The maximum number of output bytes when passing @var{length} input bytes
 to @code{base64_encode_update}.
 @end deffn
 
-@deftypefun {size_t} base64_encode_update (struct base64_encode_ctx *@var{ctx}, uint8_t *@var{dst}, size_t @var{length}, const uint8_t *@var{src})
+@deftypefun {size_t} base64_encode_update (struct base64_encode_ctx *@var{ctx}, char *@var{dst}, size_t @var{length}, const uint8_t *@var{src})
 After @var{ctx} is initialized, this function may be called to encode @var{length}
 bytes from @var{src}. The result will be placed in @var{dst}, and the return value
 will be the number of bytes generated. Note that @var{dst} must be at least of size
@@ -6353,7 +6353,7 @@ BASE64_ENCODE_LENGTH(@var{length}).
 The maximum amount of output from @code{base64_encode_final}.
 @end defvr
 
-@deftypefun {size_t} base64_encode_final (struct base64_encode_ctx *@var{ctx}, uint8_t *@var{dst})
+@deftypefun {size_t} base64_encode_final (struct base64_encode_ctx *@var{ctx}, char *@var{dst})
 After calling base64_encode_update one or more times, this function
 should be called to generate the final output bytes, including any
 needed paddding. The return value is the number of output bytes
@@ -6371,7 +6371,7 @@ base64 alphabet, while @code{base64url_decode_init} selects the URL safe
 alphabet.
 @end deftypefun
 
-@deftypefun {int} base64_decode_single (struct base64_decode_ctx *@var{ctx}, uint8_t *@var{dst}, uint8_t @var{src})
+@deftypefun {int} base64_decode_single (struct base64_decode_ctx *@var{ctx}, uint8_t *@var{dst}, char @var{src})
 Decodes a single byte (@var{src}) and stores the result in @var{dst}.
 Returns amount of output (0 or 1), or -1 on errors.
 @end deftypefun
@@ -6381,7 +6381,7 @@ The maximum number of output bytes when passing @var{length} input bytes
 to @code{base64_decode_update}.
 @end deffn
 
-@deftypefun {void} base64_decode_update (struct base64_decode_ctx *@var{ctx}, size_t *@var{dst_length}, uint8_t *@var{dst}, size_t @var{src_length}, const uint8_t *@var{src})
+@deftypefun {int} base64_decode_update (struct base64_decode_ctx *@var{ctx}, size_t *@var{dst_length}, uint8_t *@var{dst}, size_t @var{src_length}, const char *@var{src})
 After @var{ctx} is initialized, this function may be called to decode
 @var{src_length} bytes from @var{src}. The buffer pointed to by
 @var{dst} must be of size *@var{dst_length}, and the amount of data
@@ -6400,7 +6400,7 @@ Similarly to the base64 functions, the following functions perform base16 encodi
 and are defined in @file{<nettle/base16.h>}. Note that there is no encoding context
 necessary for doing base16 encoding.
 
-@deftypefun {void} base16_encode_single (uint8_t *@var{dst}, uint8_t @var{src})
+@deftypefun {void} base16_encode_single (char *@var{dst}, uint8_t @var{src})
 Encodes a single byte. Always stores two digits in @var{dst}[0] and @var{dst}[1].
 @end deftypefun
 
@@ -6409,7 +6409,7 @@ The number of output bytes when passing @var{length} input bytes to
 @code{base16_encode_update}.
 @end deffn
 
-@deftypefun {void} base16_encode_update (uint8_t *@var{dst}, size_t @var{length}, const uint8_t *@var{src})
+@deftypefun {void} base16_encode_update (char *@var{dst}, size_t @var{length}, const uint8_t *@var{src})
 Always stores BASE16_ENCODE_LENGTH(@var{length}) digits in @var{dst}.
 @end deftypefun
 
@@ -6421,7 +6421,7 @@ Initializes a base16 decoding context. This is necessary before starting a decod
 session.
 @end deftypefun
 
-@deftypefun {int} base16_decode_single (struct base16_decode_ctx *@var{ctx}, uint8_t *@var{dst}, uint8_t @var{src})
+@deftypefun {int} base16_decode_single (struct base16_decode_ctx *@var{ctx}, uint8_t *@var{dst}, char @var{src})
 Decodes a single byte from @var{src} into @var{dst}. Returns amount of output (0 or 1), or -1 on errors.
 @end deftypefun
 
@@ -6430,7 +6430,7 @@ The maximum number of output bytes when passing @var{length} input bytes
 to @code{base16_decode_update}.
 @end deffn
 
-@deftypefun {int} base16_decode_update (struct base16_decode_ctx *@var{ctx}, size_t *@var{dst_length}, uint8_t *@var{dst}, size_t @var{src_length}, const uint8_t *@var{src})
+@deftypefun {int} base16_decode_update (struct base16_decode_ctx *@var{ctx}, size_t *@var{dst_length}, uint8_t *@var{dst}, size_t @var{src_length}, const char *@var{src})
 After @var{ctx} is initialized, this function may be called to decode
 @var{src_length} bytes from @var{src}. The buffer pointed to by
 @var{dst} must be of size *@var{dst_length}, and the amount of data
