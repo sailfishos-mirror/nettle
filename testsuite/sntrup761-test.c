@@ -95,6 +95,42 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
     }
 }
 
+static void
+test_randomized (void)
+{
+  struct drbg_ctr_aes256_ctx rng_ctx;
+  static const uint8_t seed[DRBG_CTR_AES256_SEED_SIZE] = { 17 };
+  unsigned count;
+  drbg_ctr_aes256_init (&rng_ctx, seed);
+
+  for (count = 0; count < 100; count++)
+    {
+      uint8_t pk[SNTRUP761_PUBLICKEY_SIZE];
+      uint8_t sk[SNTRUP761_SECRETKEY_SIZE];
+      uint8_t ct[SNTRUP761_CIPHERTEXT_SIZE];
+      uint8_t k1[SNTRUP761_SIZE];
+      uint8_t k2[SNTRUP761_SIZE];
+      unsigned bit;
+      sntrup761_keypair (pk, sk, &rng_ctx, (nettle_random_func *) drbg_ctr_aes256_random);
+      sntrup761_enc (ct, k1, pk, &rng_ctx, (nettle_random_func *) drbg_ctr_aes256_random);
+      sntrup761_dec (k2, ct, sk);
+
+      if (!MEMEQ (SNTRUP761_SIZE, k1, k2))
+	{
+	  printf ("sntrup761 failed, test %u\n", count);
+	  abort ();
+	}
+      bit = count % (SNTRUP761_CIPHERTEXT_SIZE * 8);
+      ct[bit/8] ^= 1 << (bit % 8);
+      sntrup761_dec (k2, ct, sk);
+      if (MEMEQ (SNTRUP761_SIZE, k1, k2))
+	{
+	  printf ("sntrup761 failed with modified ciphertext, test %u\n", count);
+	  abort ();
+	}
+    }
+}
+
 void
 test_main (void)
 {
@@ -449,4 +485,5 @@ test_main (void)
 		  "B570286BA114F8"),
 	       H ("16C15126F734E51268BA916CE3B39A72E171AE79B8C2B6A6"
 		  "8B34AB0DC5621B7E"));
+  test_randomized ();
 }
