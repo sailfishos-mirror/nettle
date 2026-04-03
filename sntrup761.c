@@ -58,6 +58,8 @@
 
 /* Defines the coefficient field Z/q, with q = 1 (mod 6). */
 #define SNTRUP761_Q 4591
+/* Elements canonicalized to range |x| <= (q-1)/2 */
+#define SNTRUP761_Q12 ((SNTRUP761_Q-1)/2)
 
 /* Defines polynomial x^p - x - 1, irreducible over Z/q. */
 #define SNTRUP761_P 761
@@ -211,36 +213,6 @@ uint32_mod_uint14 (uint32_t x, uint16_t m)
   uint32_t q;
   uint16_t r;
   uint32_divmod_uint14 (&q, &r, x, m);
-  return r;
-}
-
-/* from supercop-20201130/crypto_kem/sntrup761/ref/int32.c */
-
-static void
-int32_divmod_uint14 (int32_t * q, uint16_t * r, int32_t x, uint16_t m)
-{
-  uint32_t uq, uq2;
-  uint16_t ur, ur2;
-  uint32_t mask;
-
-  uint32_divmod_uint14 (&uq, &ur, 0x80000000 + (uint32_t) x, m);
-  uint32_divmod_uint14 (&uq2, &ur2, 0x80000000, m);
-  ur -= ur2;
-  uq -= uq2;
-  mask = -(uint32_t) (ur >> 15);
-  ur += mask & m;
-  uq += mask;
-  *r = ur;
-  *q = uq;
-}
-
-
-static uint16_t
-int32_mod_uint14 (int32_t x, uint16_t m)
-{
-  int32_t q;
-  uint16_t r;
-  int32_divmod_uint14 (&q, &r, x, m);
   return r;
 }
 
@@ -400,18 +372,30 @@ int16_t_negative_mask (int16_t x)
 typedef int8_t small;
 
 /* F3 is always represented as -1,0,1 */
-/* so ZZ_fromF3 is a no-op */
-
-/* x must not be close to top int16_t */
 static small
 F3_freeze (int16_t x)
 {
-  return int32_mod_uint14 (x + 1, 3) - 1;
-}
+  uint16_t ux, a, r, p, mask;
+  /* x is either an canonical representative of Fq, |x| <= (q-1) / 2,
+     or result of polynomial multiplication in which case |x| <= 2p
+     which is a smaller range. */
+  assert_maybe (x <= SNTRUP761_Q12);
+  assert_maybe (x >= -SNTRUP761_Q12);
 
+  /* We want ((x + 1) mod q) - 1, but also add a multiple of 3 so we
+     can use unsigned arithmetic. And (q-1)/2 happens to be a multiple
+     of 3. */
+  ux = x + 1 + SNTRUP761_Q12;
+  /* Magic constant is ceil (2^16 / 3). */
+  a = ((uint32_t) 21846 * ux) >> 16;
+  p = 3 * a;
+  mask = - (uint16_t) (p > ux);
+  r = ux - p  + (mask & 3);
+  assert_maybe (r < 3);
+  return (int8_t) r - 1;
+}
 /* ----- arithmetic mod q */
 
-#define SNTRUP761_Q12 ((SNTRUP761_Q-1)/2)
 typedef int16_t Fq;
 /* always represented as -(q-1)/2...(q-1)/2 */
 /* so ZZ_fromFq is a no-op */
