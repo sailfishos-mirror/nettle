@@ -47,6 +47,15 @@
 
 #include "sha2.h"
 
+/* Defines the coefficient field Z/q, with q = 1 (mod 6). */
+#define SNTRUP761_Q 4591
+
+/* Defines polynomial x^p - x - 1, irreducible over Z/q. */
+#define SNTRUP761_P 761
+
+/* Target polynomial weight. */
+#define SNTRUP761_W 286
+
 #define uint32_MINMAX(a,b) \
 do { \
   uint64_t d = (uint64_t)b - (uint64_t)a; \
@@ -227,10 +236,7 @@ int32_mod_uint14 (int32_t x, uint16_t m)
 }
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/paramsmenu.h */
-#define SNTRUP761_P 761
-#define SNTRUP761_Q 4591
 #define Rounded_bytes 1007
-#define SNTRUP761_W 286
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.h */
 
