@@ -136,6 +136,10 @@ void
 test_main (void)
 {
   struct drbg_ctr_aes256_ctx rng;
+#if WITH_EXTRA_ASSERTS
+  if (test_side_channel)
+    SKIP();
+#endif
 
   /* https://ntruprime.cr.yp.to/nist/ntruprime-20201007/KAT/kem/sntrup761/kat_kem.rsp.html */
 

@@ -41,6 +41,15 @@
 #include "config.h"
 #endif
 
+/* For asserts that are incompatible with sc tests. Currently used
+   only by ECC code. */
+#if WITH_EXTRA_ASSERTS
+# include <assert.h>
+# define assert_maybe(x) assert(x)
+#else
+# define assert_maybe(x) ((void)(x))
+#endif
+
 #include <string.h>
 
 #include "sntrup761.h"
@@ -407,11 +416,24 @@ typedef int16_t Fq;
 /* always represented as -(q-1)/2...(q-1)/2 */
 /* so ZZ_fromFq is a no-op */
 
-/* x must not be close to top int32 */
 static Fq
 Fq_freeze (int32_t x)
 {
-  return int32_mod_uint14 (x + SNTRUP761_Q12, SNTRUP761_Q) - SNTRUP761_Q12;
+  uint32_t ux, a, r, p, mask;
+  /* When called Rq_mult_small, inputs are limited to w*(q-1), but for
+     Fq_recip and Rq_recip3 inputs may be up to 2 q^2. */
+  assert_maybe (x < 2*SNTRUP761_Q * SNTRUP761_Q);
+  assert_maybe (x > -2*SNTRUP761_Q * SNTRUP761_Q);
+  /* We want ((x + (q-1)/2) mod q) - (q-1)/2, but also add a multiple
+     of q so we can use unsigned arithmetic. */
+  ux = x + SNTRUP761_Q12 + 2*SNTRUP761_Q * SNTRUP761_Q;
+  /* Magic constant is ceil (2^32 / q) */
+  a = ((uint64_t) 935519 * ux) >> 32;
+  p = SNTRUP761_Q * a;
+  mask = - (uint32_t) (p > ux);
+  r = ux - p  + (mask & SNTRUP761_Q);
+  assert_maybe (r < SNTRUP761_Q);
+  return (int32_t) r - SNTRUP761_Q12;
 }
 
 static Fq
