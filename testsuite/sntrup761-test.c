@@ -101,9 +101,10 @@ test_randomized (void)
   struct drbg_ctr_aes256_ctx rng_ctx;
   static const uint8_t seed[DRBG_CTR_AES256_SEED_SIZE] = { 17 };
   unsigned count;
+  unsigned end_count = test_side_channel ? 3 : 100;
   drbg_ctr_aes256_init (&rng_ctx, seed);
 
-  for (count = 0; count < 100; count++)
+  for (count = 0; count < end_count; count++)
     {
       uint8_t pk[SNTRUP761_PUBLICKEY_SIZE];
       uint8_t sk[SNTRUP761_SECRETKEY_SIZE];
