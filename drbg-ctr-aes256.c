@@ -74,7 +74,7 @@ drbg_ctr_aes256_update (struct drbg_ctr_aes256_ctx *ctx,
 }
 
 void
-drbg_ctr_aes256_init (struct drbg_ctr_aes256_ctx *ctx, uint8_t *seed_material)
+drbg_ctr_aes256_init (struct drbg_ctr_aes256_ctx *ctx, const uint8_t *seed_material)
 {
   static const uint8_t zero_key[AES256_KEY_SIZE] = {0};
 

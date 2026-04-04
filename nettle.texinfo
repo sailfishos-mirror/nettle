@@ -6270,7 +6270,7 @@ Nettle defines DRBG-CTR in @file{<nettle/drbg-ctr.h>}.
 The size of the seeding material.
 @end defvr
 
-@deftypefun void drbg_ctr_aes256_init (struct drbg_ctr_aes256_ctx *@var{ctx}, uint8_t *@var{seed_material})
+@deftypefun void drbg_ctr_aes256_init (struct drbg_ctr_aes256_ctx *@var{ctx}, const uint8_t *@var{seed_material})
 Initialize the DRBG-CTR-AES256 context using
 @code{DRBG_CTR_AES256_SEED_SIZE} bytes of @var{seed_material}.
 @end deftypefun

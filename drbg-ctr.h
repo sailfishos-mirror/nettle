@@ -56,7 +56,7 @@ struct drbg_ctr_aes256_ctx
    SEED_MATERIAL.  */
 void
 drbg_ctr_aes256_init (struct drbg_ctr_aes256_ctx *ctx,
-		      uint8_t *seed_material);
+		      const uint8_t *seed_material);
 
 /* Output N bytes of random data into DST.  */
 void

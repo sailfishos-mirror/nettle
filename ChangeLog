@@ -1,3 +1,8 @@
+2026-04-03  Niels Möller  <nisse@lysator.liu.se>
+
+	* drbg-ctr-aes256.c (drbg_ctr_aes256_init): Use const for
+	seed_material argument.
+
 2026-03-19  Niels Möller  <nisse@lysator.liu.se>
 
 	* nettle.texinfo (Curve 25519 and Curve 448): Document that one
