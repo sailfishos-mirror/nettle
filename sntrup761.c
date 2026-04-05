@@ -367,10 +367,8 @@ int16_t_negative_mask (int16_t x)
 
 /* ----- arithmetic mod 3 */
 
-typedef int8_t small;
-
 /* F3 is always represented as -1,0,1 */
-static small
+static int8_t
 F3_freeze (int16_t x)
 {
   uint16_t ux, a, r, p, mask;
@@ -394,11 +392,10 @@ F3_freeze (int16_t x)
 }
 /* ----- arithmetic mod q */
 
-typedef int16_t Fq;
 /* always represented as -(q-1)/2...(q-1)/2 */
 /* so ZZ_fromFq is a no-op */
 
-static Fq
+static int16_t
 Fq_freeze (int32_t x)
 {
   uint32_t ux, a, r, p, mask;
@@ -419,11 +416,11 @@ Fq_freeze (int32_t x)
   return (int32_t) r - SNTRUP761_Q12;
 }
 
-static Fq
-Fq_recip (Fq a1)
+static int16_t
+Fq_recip (int16_t a1)
 {
   int i = 1;
-  Fq ai = a1;
+  int16_t ai = a1;
 
   while (i < SNTRUP761_Q - 2)
     {
@@ -433,11 +430,16 @@ Fq_recip (Fq a1)
   return ai;
 }
 
-/* ----- small polynomials */
+/* Polynomial typedefs, passed by reference. */
+/* Coefficients mod 3, represented as -1, 0, 1. */
+typedef int8_t sntrup761_R3_t[SNTRUP761_P];
+
+/* Coefficients mod q, represented as -(q-1)/2, ... , (q-1)/2. */
+typedef int16_t sntrup761_Rq_t[SNTRUP761_P];
 
 /* 0 if Weightw_is(r), else -1 */
 static int
-Weightw_mask (small * r)
+Weightw_mask (sntrup761_R3_t r)
 {
   int weight = 0;
   int i;
@@ -449,7 +451,7 @@ Weightw_mask (small * r)
 
 /* R3_fromR(R_fromRq(r)) */
 static void
-R3_fromRq (small * out, const Fq * r)
+R3_fromRq (sntrup761_R3_t out, const sntrup761_Rq_t r)
 {
   int i;
   for (i = 0; i < SNTRUP761_P; ++i)
@@ -458,7 +460,7 @@ R3_fromRq (small * out, const Fq * r)
 
 /* h = f*g in the ring R3 */
 static void
-R3_mult (small * h, const small * f, const small * g)
+R3_mult (sntrup761_R3_t h, const sntrup761_R3_t f, const sntrup761_R3_t g)
 {
   int16_t fg[SNTRUP761_P + SNTRUP761_P - 1];
   int i, j;
@@ -490,9 +492,9 @@ R3_mult (small * h, const small * f, const small * g)
 
 /* returns 0 if recip succeeded; else -1 */
 static int
-R3_recip (small * out, const small * in)
+R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 {
-  small f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
+  int8_t f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
   int i, loop, delta;
   int sign, swap, t;
 
@@ -553,7 +555,7 @@ R3_recip (small * out, const small * in)
 
 /* h = f*g in the ring Rq */
 static void
-Rq_mult_small (Fq * h, const Fq * f, const small * g)
+Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g)
 {
   int32_t fg[SNTRUP761_P + SNTRUP761_P - 1];
   int i, j;
@@ -585,7 +587,7 @@ Rq_mult_small (Fq * h, const Fq * f, const small * g)
 
 /* h = 3f in Rq */
 static void
-Rq_mult3 (Fq * h, const Fq * f)
+Rq_mult3 (sntrup761_Rq_t h, const sntrup761_Rq_t f)
 {
   int i;
 
@@ -596,13 +598,13 @@ Rq_mult3 (Fq * h, const Fq * f)
 /* out = 1/(3*in) in Rq */
 /* returns 0 if recip succeeded; else -1 */
 static int
-Rq_recip3 (Fq * out, const small * in)
+Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
 {
-  Fq f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
+  int16_t f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
   int i, loop, delta;
   int swap, t;
   int32_t f0, g0;
-  Fq scale;
+  int16_t scale;
 
   for (i = 0; i < SNTRUP761_P + 1; ++i)
     v[i] = 0;
@@ -661,7 +663,7 @@ Rq_recip3 (Fq * out, const small * in)
 /* ----- rounded polynomials mod q */
 
 static void
-Round (Fq * out, const Fq * a)
+Round (sntrup761_Rq_t out, const sntrup761_Rq_t a)
 {
   int i;
   for (i = 0; i < SNTRUP761_P; ++i)
@@ -671,7 +673,7 @@ Round (Fq * out, const Fq * a)
 /* ----- sorting to generate short polynomial */
 
 static void
-Short_fromlist (small * out, const uint32_t * in)
+Short_fromlist (sntrup761_R3_t out, const uint32_t *in)
 {
   uint32_t L[SNTRUP761_P];
   int i;
@@ -732,7 +734,7 @@ urandom32 (void *random_ctx, nettle_random_func * random)
 }
 
 static void
-Short_random (small * out, void *random_ctx, nettle_random_func * random)
+Short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
 {
   uint32_t L[SNTRUP761_P];
   int i;
@@ -743,7 +745,7 @@ Short_random (small * out, void *random_ctx, nettle_random_func * random)
 }
 
 static void
-Small_random (small * out, void *random_ctx, nettle_random_func * random)
+Small_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
 {
   int i;
 
@@ -755,11 +757,11 @@ Small_random (small * out, void *random_ctx, nettle_random_func * random)
 
 /* h,(f,ginv) = KeyGen() */
 static void
-KeyGen (Fq * h, small * f, small * ginv, void *random_ctx,
-	nettle_random_func * random)
+KeyGen (sntrup761_Rq_t h, sntrup761_R3_t f, sntrup761_R3_t ginv,
+	void *random_ctx, nettle_random_func * random)
 {
-  small g[SNTRUP761_P];
-  Fq finv[SNTRUP761_P];
+  sntrup761_R3_t g;
+  sntrup761_Rq_t finv;
 
   for (;;)
     {
@@ -774,9 +776,9 @@ KeyGen (Fq * h, small * f, small * ginv, void *random_ctx,
 
 /* c = Encrypt(r,h) */
 static void
-Encrypt (Fq * c, const small * r, const Fq * h)
+Encrypt (sntrup761_Rq_t c, const sntrup761_R3_t r, const sntrup761_Rq_t h)
 {
-  Fq hr[SNTRUP761_P];
+  sntrup761_Rq_t hr;
 
   Rq_mult_small (hr, h, r);
   Round (c, hr);
@@ -784,12 +786,11 @@ Encrypt (Fq * c, const small * r, const Fq * h)
 
 /* r = Decrypt(c,(f,ginv)) */
 static void
-Decrypt (small * r, const Fq * c, const small * f, const small * ginv)
+Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c, 
+	 const sntrup761_R3_t f, const sntrup761_R3_t ginv)
 {
-  Fq cf[SNTRUP761_P];
-  Fq cf3[SNTRUP761_P];
-  small e[SNTRUP761_P];
-  small ev[SNTRUP761_P];
+  sntrup761_Rq_t cf, cf3;
+  sntrup761_R3_t e, ev;
   int mask;
   int i;
 
@@ -812,48 +813,47 @@ Decrypt (small * r, const Fq * c, const small * f, const small * ginv)
 /* these are the only functions that rely on SNTRUP761_P mod 4 = 1 */
 
 static void
-Small_encode (uint8_t *s, const small * f)
+Small_encode (uint8_t *s, const sntrup761_R3_t f)
 {
-  small x;
+  const int8_t *p;
   int i;
 
-  for (i = 0; i < SNTRUP761_P / 4; ++i)
+  for (i = 0, p = f; i < SNTRUP761_P / 4; ++i)
     {
-      x = *f++ + 1;
-      x += (*f++ + 1) << 2;
-      x += (*f++ + 1) << 4;
-      x += (*f++ + 1) << 6;
+      int8_t x;
+      x = *p++ + 1;
+      x += (*p++ + 1) << 2;
+      x += (*p++ + 1) << 4;
+      x += (*p++ + 1) << 6;
       *s++ = x;
     }
-  x = *f++ + 1;
-  *s++ = x;
+  *s = *p + 1;
 }
 
 static void
-Small_decode (small * f, const uint8_t *s)
+Small_decode (sntrup761_R3_t f, const uint8_t *s)
 {
-  uint8_t x;
+  int8_t *p;
   int i;
 
-  for (i = 0; i < SNTRUP761_P / 4; ++i)
+  for (i = 0, p = f; i < SNTRUP761_P / 4; ++i)
     {
-      x = *s++;
-      *f++ = ((small) (x & 3)) - 1;
+      uint8_t x = *s++;
+      *p++ = ((int8_t) (x & 3)) - 1;
       x >>= 2;
-      *f++ = ((small) (x & 3)) - 1;
+      *p++ = ((int8_t) (x & 3)) - 1;
       x >>= 2;
-      *f++ = ((small) (x & 3)) - 1;
+      *p++ = ((int8_t) (x & 3)) - 1;
       x >>= 2;
-      *f++ = ((small) (x & 3)) - 1;
+      *p++ = ((int8_t) (x & 3)) - 1;
     }
-  x = *s++;
-  *f++ = ((small) (x & 3)) - 1;
+  *p = ((int8_t) (*s & 3)) - 1;
 }
 
 /* ----- encoding general polynomials */
 
 static void
-Rq_encode (uint8_t *s, const Fq * r)
+Rq_encode (uint8_t *s, const sntrup761_Rq_t r)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -866,7 +866,7 @@ Rq_encode (uint8_t *s, const Fq * r)
 }
 
 static void
-Rq_decode (Fq * r, const uint8_t *s)
+Rq_decode (sntrup761_Rq_t r, const uint8_t *s)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -875,13 +875,13 @@ Rq_decode (Fq * r, const uint8_t *s)
     M[i] = SNTRUP761_Q;
   Decode (R, s, M, SNTRUP761_P);
   for (i = 0; i < SNTRUP761_P; ++i)
-    r[i] = ((Fq) R[i]) - SNTRUP761_Q12;
+    r[i] = ((int16_t) R[i]) - SNTRUP761_Q12;
 }
 
 /* ----- encoding rounded polynomials */
 
 static void
-Rounded_encode (uint8_t *s, const Fq * r)
+Rounded_encode (uint8_t *s, const sntrup761_Rq_t r)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -894,7 +894,7 @@ Rounded_encode (uint8_t *s, const Fq * r)
 }
 
 static void
-Rounded_decode (Fq * r, const uint8_t *s)
+Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
   int i;
@@ -908,8 +908,6 @@ Rounded_decode (Fq * r, const uint8_t *s)
 
 /* ----- Streamlined NTRU Prime Core plus encoding */
 
-typedef small Inputs[SNTRUP761_P];	/* passed by reference */
-
 #define Ciphertexts_bytes Rounded_bytes
 #define SecretKeys_bytes (2*Small_bytes)
 
@@ -918,8 +916,8 @@ static void
 ZKeyGen (uint8_t *pk, uint8_t *sk, void *random_ctx,
 	 nettle_random_func * random)
 {
-  Fq h[SNTRUP761_P];
-  small f[SNTRUP761_P], v[SNTRUP761_P];
+  sntrup761_Rq_t h;
+  sntrup761_R3_t f, v;
 
   KeyGen (h, f, v, random_ctx, random);
   Rq_encode (pk, h);
@@ -930,26 +928,25 @@ ZKeyGen (uint8_t *pk, uint8_t *sk, void *random_ctx,
 
 /* C = ZEncrypt(r,pk) */
 static void
-ZEncrypt (uint8_t *C, const Inputs r, const uint8_t *pk)
+ZEncrypt (uint8_t *c_enc, const sntrup761_R3_t r, const uint8_t *pk)
 {
-  Fq h[SNTRUP761_P];
-  Fq c[SNTRUP761_P];
+  sntrup761_Rq_t h, c;
   Rq_decode (h, pk);
   Encrypt (c, r, h);
-  Rounded_encode (C, c);
+  Rounded_encode (c_enc, c);
 }
 
 /* r = ZDecrypt(C,sk) */
 static void
-ZDecrypt (Inputs r, const uint8_t *C, const uint8_t *sk)
+ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
 {
-  small f[SNTRUP761_P], v[SNTRUP761_P];
-  Fq c[SNTRUP761_P];
+  sntrup761_R3_t f, v;
+  sntrup761_Rq_t c;
 
   Small_decode (f, sk);
   sk += Small_bytes;
   Small_decode (v, sk);
-  Rounded_decode (c, C);
+  Rounded_decode (c, c_enc);
   Decrypt (r, c, f, v);
 }
 
@@ -1009,7 +1006,7 @@ sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
 static void
-Hide (uint8_t *c, uint8_t *r_enc, const Inputs r,
+Hide (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
       const uint8_t *pk, const uint8_t *cache)
 {
   Small_encode (r_enc, r);
@@ -1023,7 +1020,7 @@ void
 sntrup761_enc (uint8_t *c, uint8_t *k, const uint8_t *pk,
 	       void *random_ctx, nettle_random_func * random)
 {
-  Inputs r;
+  sntrup761_R3_t r;
   uint8_t r_enc[Small_bytes];
   uint8_t cache[HASH_SIZE];
 
@@ -1052,7 +1049,7 @@ sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk)
   const uint8_t *pk = sk + SecretKeys_bytes;
   const uint8_t *rho = pk + SNTRUP761_PUBLIC_KEY_SIZE;
   const uint8_t *cache = rho + Small_bytes;
-  Inputs r;
+  sntrup761_R3_t r;
   uint8_t r_enc[Small_bytes];
   uint8_t cnew[Ciphertexts_bytes + Confirm_bytes];
   int mask;
