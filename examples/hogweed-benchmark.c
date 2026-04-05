@@ -52,7 +52,7 @@
 #include "curve25519.h"
 #include "curve448.h"
 #include "slh-dsa.h"
-#include "sntrup761.h"
+#include "sntrup.h"
 
 #include "nettle-meta.h"
 #include "sexp.h"
@@ -968,9 +968,9 @@ bench_slh_dsa_clear (void *p)
 
 struct sntrup_ctx
 {
-  uint8_t public_key[SNTRUP761_PUBLICKEY_SIZE];
-  uint8_t secret_key[SNTRUP761_SECRETKEY_SIZE];
-  uint8_t ciphertext[SNTRUP761_CIPHERTEXT_SIZE];
+  uint8_t public_key[SNTRUP761_PUBLIC_KEY_SIZE];
+  uint8_t secret_key[SNTRUP761_PRIVATE_KEY_SIZE];
+  uint8_t ciphertext[SNTRUP761_CIPHER_SIZE];
   struct knuth_lfib_ctx lfib;
 
 };
@@ -979,13 +979,13 @@ static void *
 bench_sntrup_init (unsigned size)
 {
   struct sntrup_ctx *ctx;
-  uint8_t session_key[SNTRUP761_SIZE];
+  uint8_t session_key[SNTRUP_SESSION_KEY_SIZE];
   assert (size == 761);
   ctx = xalloc (sizeof (*ctx));
 
   knuth_lfib_init (&ctx->lfib, 1);
-  sntrup761_keypair (ctx->public_key, ctx->secret_key,
-		     &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
+  sntrup761_generate_keypair (ctx->public_key, ctx->secret_key,
+			      &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
   sntrup761_enc (ctx->ciphertext, session_key, ctx->public_key,
 		 &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
 
@@ -996,7 +996,7 @@ static void
 bench_sntrup_decrypt (void *p)
 {
   struct sntrup_ctx *ctx = p;
-  uint8_t session_key[SNTRUP761_SIZE];
+  uint8_t session_key[SNTRUP_SESSION_KEY_SIZE];
   sntrup761_dec (session_key, ctx->ciphertext, ctx->secret_key);
 }
 
@@ -1004,7 +1004,7 @@ static void
 bench_sntrup_encrypt (void *p)
 {
   struct sntrup_ctx *ctx = p;
-  uint8_t session_key[SNTRUP761_SIZE];
+  uint8_t session_key[SNTRUP_SESSION_KEY_SIZE];
   sntrup761_enc (ctx->ciphertext, session_key, ctx->public_key,
 		 &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
 }

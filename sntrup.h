@@ -1,6 +1,7 @@
-/* sntrup761.h
+/* sntrup.h
 
    Copyright (C) 2023 Simon Josefsson
+   Copyright (C) 2026 Niels Möller
 
    This file is part of GNU Nettle.
 
@@ -37,8 +38,8 @@
  * - Christine van Vredendaal
  */
 
-#ifndef NETTLE_SNTRUP761_H
-#define NETTLE_SNTRUP761_H
+#ifndef NETTLE_SNTRUP_H
+#define NETTLE_SNTRUP_H
 
 #include "nettle-types.h"
 
@@ -48,18 +49,18 @@ extern "C"
 #endif
 
 /* Name mangling */
-#define sntrup761_keypair nettle_sntrup761_keypair
+#define sntrup761_generate_keypair nettle_sntrup761_generate_keypair
 #define sntrup761_enc nettle_sntrup761_enc
 #define sntrup761_dec nettle_sntrup761_dec
 
-#define SNTRUP761_SECRETKEY_SIZE 1763
-#define SNTRUP761_PUBLICKEY_SIZE 1158
-#define SNTRUP761_CIPHERTEXT_SIZE 1039
-#define SNTRUP761_SIZE 32
+#define SNTRUP761_PRIVATE_KEY_SIZE 1763
+#define SNTRUP761_PUBLIC_KEY_SIZE 1158
+#define SNTRUP761_CIPHER_SIZE 1039
+#define SNTRUP_SESSION_KEY_SIZE 32
 
 void
-sntrup761_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
-		   nettle_random_func *random);
+sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
+			    nettle_random_func *random);
 
 void
 sntrup761_enc (uint8_t *c, uint8_t *k, const uint8_t *pk,
@@ -72,4 +73,4 @@ sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk);
 }
 #endif
 
-#endif				/* NETTLE_SNTRUP761_H */
+#endif /* NETTLE_SNTRUP_H */

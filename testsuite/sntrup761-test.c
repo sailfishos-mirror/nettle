@@ -31,7 +31,7 @@
 
 #include "testutils.h"
 
-#include "sntrup761.h"
+#include "sntrup.h"
 
 #include "drbg-ctr.h"
 
@@ -47,16 +47,17 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
 	     const uint8_t * xpk, const uint8_t * xsk,
 	     const uint8_t * xct, const uint8_t * xk)
 {
-  uint8_t pk[SNTRUP761_PUBLICKEY_SIZE];
-  uint8_t sk[SNTRUP761_SECRETKEY_SIZE];
-  uint8_t ct[SNTRUP761_CIPHERTEXT_SIZE];
-  uint8_t k1[SNTRUP761_SIZE];
-  uint8_t k2[SNTRUP761_SIZE];
+  uint8_t pk[SNTRUP761_PUBLIC_KEY_SIZE];
+  uint8_t sk[SNTRUP761_PRIVATE_KEY_SIZE];
+  uint8_t ct[SNTRUP761_CIPHER_SIZE];
+  uint8_t k1[SNTRUP_SESSION_KEY_SIZE];
+  uint8_t k2[SNTRUP_SESSION_KEY_SIZE];
 
-  sntrup761_keypair (pk, sk, rngctx, (nettle_random_func *) drbg_ctr_aes256_random);
+  sntrup761_generate_keypair (pk, sk, rngctx,
+			      (nettle_random_func *) drbg_ctr_aes256_random);
 
-  if (!MEMEQ (SNTRUP761_PUBLICKEY_SIZE, pk, xpk)
-      || !MEMEQ (SNTRUP761_SECRETKEY_SIZE, sk, xsk))
+  if (!MEMEQ (SNTRUP761_PUBLIC_KEY_SIZE, pk, xpk)
+      || !MEMEQ (SNTRUP761_PRIVATE_KEY_SIZE, sk, xsk))
     {
       printf ("\nnstrup761_keypair:\npk = ");
       print_hex (sizeof pk, pk);
@@ -68,8 +69,8 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
   sntrup761_enc (ct, k1, pk, rngctx, (nettle_random_func *) random_undefined);
   mark_bytes_defined (sizeof (ct), ct);
   mark_bytes_defined (sizeof (k1), k1);
-  if (!MEMEQ (SNTRUP761_CIPHERTEXT_SIZE, ct, xct)
-      || !MEMEQ (SNTRUP761_SIZE, k1, xk))
+  if (!MEMEQ (SNTRUP761_CIPHER_SIZE, ct, xct)
+      || !MEMEQ (SNTRUP_SESSION_KEY_SIZE, k1, xk))
     {
       printf ("\nnstrup761_enc:\nct = ");
       print_hex (sizeof ct, ct);
@@ -81,14 +82,14 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
   sntrup761_dec (k2, ct, sk);
   mark_bytes_defined (sizeof (k2), k2);
 
-  if (!MEMEQ (SNTRUP761_SIZE, k2, xk))
+  if (!MEMEQ (SNTRUP_SESSION_KEY_SIZE, k2, xk))
     {
       printf ("\nnstrup761_dec:\nk2 = ");
       print_hex (sizeof k2, k2);
       abort ();
     }
 
-  if (!MEMEQ (SNTRUP761_SIZE, k1, k2))
+  if (!MEMEQ (SNTRUP_SESSION_KEY_SIZE, k1, k2))
     {
       printf ("\nsntrup761 k1 != k2\n");
       abort ();
@@ -106,25 +107,27 @@ test_randomized (void)
 
   for (count = 0; count < end_count; count++)
     {
-      uint8_t pk[SNTRUP761_PUBLICKEY_SIZE];
-      uint8_t sk[SNTRUP761_SECRETKEY_SIZE];
-      uint8_t ct[SNTRUP761_CIPHERTEXT_SIZE];
-      uint8_t k1[SNTRUP761_SIZE];
-      uint8_t k2[SNTRUP761_SIZE];
+      uint8_t pk[SNTRUP761_PUBLIC_KEY_SIZE];
+      uint8_t sk[SNTRUP761_PRIVATE_KEY_SIZE];
+      uint8_t ct[SNTRUP761_CIPHER_SIZE];
+      uint8_t k1[SNTRUP_SESSION_KEY_SIZE];
+      uint8_t k2[SNTRUP_SESSION_KEY_SIZE];
       unsigned bit;
-      sntrup761_keypair (pk, sk, &rng_ctx, (nettle_random_func *) drbg_ctr_aes256_random);
-      sntrup761_enc (ct, k1, pk, &rng_ctx, (nettle_random_func *) drbg_ctr_aes256_random);
+      sntrup761_generate_keypair (pk, sk, &rng_ctx,
+				  (nettle_random_func *) drbg_ctr_aes256_random);
+      sntrup761_enc (ct, k1, pk, &rng_ctx,
+		     (nettle_random_func *) drbg_ctr_aes256_random);
       sntrup761_dec (k2, ct, sk);
 
-      if (!MEMEQ (SNTRUP761_SIZE, k1, k2))
+      if (!MEMEQ (SNTRUP_SESSION_KEY_SIZE, k1, k2))
 	{
 	  printf ("sntrup761 failed, test %u\n", count);
 	  abort ();
 	}
-      bit = count % (SNTRUP761_CIPHERTEXT_SIZE * 8);
+      bit = count % (SNTRUP761_CIPHER_SIZE * 8);
       ct[bit/8] ^= 1 << (bit % 8);
       sntrup761_dec (k2, ct, sk);
-      if (MEMEQ (SNTRUP761_SIZE, k1, k2))
+      if (MEMEQ (SNTRUP_SESSION_KEY_SIZE, k1, k2))
 	{
 	  printf ("sntrup761 failed with modified ciphertext, test %u\n", count);
 	  abort ();

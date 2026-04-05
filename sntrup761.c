@@ -41,8 +41,6 @@
 #include "config.h"
 #endif
 
-/* For asserts that are incompatible with sc tests. Currently used
-   only by ECC code. */
 #if WITH_EXTRA_ASSERTS
 # include <assert.h>
 # define assert_maybe(x) assert(x)
@@ -52,7 +50,7 @@
 
 #include <string.h>
 
-#include "sntrup761.h"
+#include "sntrup.h"
 
 #include "sha2.h"
 
@@ -995,18 +993,18 @@ HashSession (uint8_t *k, uint8_t b, const uint8_t *y,
 
 /* pk,sk = KEM_KeyGen() */
 void
-sntrup761_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
-		   nettle_random_func * random)
+sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
+			    nettle_random_func * random)
 {
   int i;
 
   ZKeyGen (pk, sk, random_ctx, random);
   sk += SecretKeys_bytes;
-  for (i = 0; i < SNTRUP761_PUBLICKEY_SIZE; ++i)
+  for (i = 0; i < SNTRUP761_PUBLIC_KEY_SIZE; ++i)
     *sk++ = pk[i];
   random (random_ctx, Small_bytes, sk);
   sk += Small_bytes;
-  Hash_prefix (sk, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
+  Hash_prefix (sk, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
 }
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
@@ -1029,7 +1027,7 @@ sntrup761_enc (uint8_t *c, uint8_t *k, const uint8_t *pk,
   uint8_t r_enc[Small_bytes];
   uint8_t cache[HASH_SIZE];
 
-  Hash_prefix (cache, 4, pk, SNTRUP761_PUBLICKEY_SIZE);
+  Hash_prefix (cache, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
   Short_random (r, random_ctx, random);
   Hide (c, r_enc, r, pk, cache);
   HashSession (k, 1, r_enc, c);
@@ -1052,7 +1050,7 @@ void
 sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk)
 {
   const uint8_t *pk = sk + SecretKeys_bytes;
-  const uint8_t *rho = pk + SNTRUP761_PUBLICKEY_SIZE;
+  const uint8_t *rho = pk + SNTRUP761_PUBLIC_KEY_SIZE;
   const uint8_t *cache = rho + Small_bytes;
   Inputs r;
   uint8_t r_enc[Small_bytes];
