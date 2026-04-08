@@ -295,15 +295,17 @@ Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/Encode.c */
 
-/* 0 <= R[i] < M[i] < 16384 */
+/* 0 <= R[i] < M0 < 16384 for 0 <= i < len - 1,
+   0 <= R[len -l] < M1 < 16384
+ */
 static void
-Encode (uint8_t *out, const uint16_t * R, const uint16_t * M,
+Encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
 	size_t len)
 {
   if (len == 1)
     {
       uint16_t r = R[0];
-      uint16_t m = M[0];
+      uint16_t m = M1;
       while (m > 1)
 	{
 	  *out++ = r;
@@ -314,28 +316,36 @@ Encode (uint8_t *out, const uint16_t * R, const uint16_t * M,
   if (len > 1)
     {
       uint16_t R2[(len + 1) / 2];
-      uint16_t M2[(len + 1) / 2];
+      uint32_t M2;
+      unsigned c0;
       size_t i;
-      for (i = 0; i < len - 1; i += 2)
+      for (c0 = 0, M2 = M0 * M0; M2 >= 16384; M2 = (M2 + 255) >> 8)
+	c0++;
+
+      /* Process all but the last one or two elements, using M0, M0. */
+      for (i = 0; i < len - 2; i += 2)
 	{
-	  uint32_t m0 = M[i];
-	  uint32_t r = R[i] + R[i + 1] * m0;
-	  uint32_t m = M[i + 1] * m0;
-	  while (m >= 16384)
+	  uint32_t r = R[i] + R[i + 1] * M0;
+	  unsigned j;
+	  for (j = 0; j < c0; j++, r >>= 8)
+	    *out++ = r;
+	  R2[i / 2] = r;
+	}
+      /* Last two elements processed using M0, M1. */
+      if (i == len - 2)
+	{
+	  uint32_t r = R[i] + R[i + 1] * M0;
+	  for (M1 *= M0; M1 >= 16384; M1 = (M1 + 255) >> 8)
 	    {
 	      *out++ = r;
 	      r >>= 8;
-	      m = (m + 255) >> 8;
 	    }
 	  R2[i / 2] = r;
-	  M2[i / 2] = m;
 	}
-      if (i < len)
-	{
-	  R2[i / 2] = R[i];
-	  M2[i / 2] = M[i];
-	}
-      Encode (out, R2, M2, (len + 1) / 2);
+      else
+	R2[i / 2] = R[i];
+
+      Encode (out, R2, M2, M1, (len + 1) / 2);
     }
 }
 
@@ -855,14 +865,13 @@ Small_decode (sntrup761_R3_t f, const uint8_t *s)
 static void
 Rq_encode (uint8_t *s, const sntrup761_Rq_t r)
 {
-  uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
+  uint16_t R[SNTRUP761_P];
+  uint16_t M = SNTRUP761_Q;
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = r[i] + SNTRUP761_Q12;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    M[i] = SNTRUP761_Q;
-  Encode (s, R, M, SNTRUP761_P);
+  Encode (s, R, M, M, SNTRUP761_P);
 }
 
 static void
@@ -883,14 +892,13 @@ Rq_decode (sntrup761_Rq_t r, const uint8_t *s)
 static void
 Rounded_encode (uint8_t *s, const sntrup761_Rq_t r)
 {
-  uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
+  uint16_t R[SNTRUP761_P];
+  uint16_t M = (SNTRUP761_Q + 2) / 3;
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = ((r[i] + SNTRUP761_Q12) * 10923) >> 15;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    M[i] = (SNTRUP761_Q + 2) / 3;
-  Encode (s, R, M, SNTRUP761_P);
+  Encode (s, R, M, M, SNTRUP761_P);
 }
 
 static void
