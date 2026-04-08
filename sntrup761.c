@@ -51,19 +51,7 @@
 #include <string.h>
 
 #include "sntrup.h"
-
-#include "sha2.h"
-
-/* Defines the coefficient field Z/q, with q = 1 (mod 6). */
-#define SNTRUP761_Q 4591
-/* Elements canonicalized to range |x| <= (q-1)/2 */
-#define SNTRUP761_Q12 ((SNTRUP761_Q-1)/2)
-
-/* Defines polynomial x^p - x - 1, irreducible over Z/q. */
-#define SNTRUP761_P 761
-
-/* Target polynomial weight. */
-#define SNTRUP761_W 286
+#include "sntrup-internal.h"
 
 #define uint32_MINMAX(a,b) \
 do { \
@@ -225,9 +213,9 @@ uint32_mod_uint14 (uint32_t x, uint16_t m)
 
 /* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.c */
 
-static void
-Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
-	size_t len)
+void
+_sntrup_decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
+		size_t len)
 {
   if (len == 1)
     {
@@ -271,7 +259,7 @@ Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
 	}
       if (i < len)
 	M2[i / 2] = M[i];
-      Decode (R2, S, M2, (len + 1) / 2);
+      _sntrup_decode (R2, S, M2, (len + 1) / 2);
       for (i = 0; i < len - 1; i += 2)
 	{
 	  uint32_t r = bottomr[i / 2];
@@ -298,9 +286,9 @@ Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
 /* 0 <= R[i] < M0 < 16384 for 0 <= i < len - 1,
    0 <= R[len -l] < M1 < 16384
  */
-static void
-Encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
-	size_t len)
+void
+_sntrup_encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
+		size_t len)
 {
   if (len == 1)
     {
@@ -345,7 +333,7 @@ Encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
       else
 	R2[i / 2] = R[i];
 
-      Encode (out, R2, M2, M1, (len + 1) / 2);
+      _sntrup_encode (out, R2, M2, M1, (len + 1) / 2);
     }
 }
 
@@ -378,8 +366,8 @@ int16_t_negative_mask (int16_t x)
 /* ----- arithmetic mod 3 */
 
 /* F3 is always represented as -1,0,1 */
-static int8_t
-F3_freeze (int16_t x)
+int8_t
+_sntrup_mod3 (int16_t x)
 {
   uint16_t ux, a, r, p, mask;
   /* x is either an canonical representative of Fq, |x| <= (q-1) / 2,
@@ -440,13 +428,6 @@ Fq_recip (int16_t a1)
   return ai;
 }
 
-/* Polynomial typedefs, passed by reference. */
-/* Coefficients mod 3, represented as -1, 0, 1. */
-typedef int8_t sntrup761_R3_t[SNTRUP761_P];
-
-/* Coefficients mod q, represented as -(q-1)/2, ... , (q-1)/2. */
-typedef int16_t sntrup761_Rq_t[SNTRUP761_P];
-
 /* 0 if Weightw_is(r), else -1 */
 static int
 Weightw_mask (sntrup761_R3_t r)
@@ -465,7 +446,7 @@ R3_fromRq (sntrup761_R3_t out, const sntrup761_Rq_t r)
 {
   int i;
   for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = F3_freeze (r[i]);
+    out[i] = _sntrup_mod3 (r[i]);
 }
 
 /* h = f*g in the ring R3 */
@@ -497,7 +478,7 @@ R3_mult (sntrup761_R3_t h, const sntrup761_R3_t f, const sntrup761_R3_t g)
     }
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    h[i] = F3_freeze(fg[i]);
+    h[i] = _sntrup_mod3(fg[i]);
 }
 
 /* returns 0 if recip succeeded; else -1 */
@@ -545,9 +526,9 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 	}
 
       for (i = 0; i < SNTRUP761_P + 1; ++i)
-	g[i] = F3_freeze (g[i] + sign * f[i]);
+	g[i] = _sntrup_mod3 (g[i] + sign * f[i]);
       for (i = 0; i < SNTRUP761_P + 1; ++i)
-	r[i] = F3_freeze (r[i] + sign * v[i]);
+	r[i] = _sntrup_mod3 (r[i] + sign * v[i]);
 
       for (i = 0; i < SNTRUP761_P; ++i)
 	g[i] = g[i + 1];
@@ -564,8 +545,8 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 /* ----- polynomials mod q */
 
 /* h = f*g in the ring Rq */
-static void
-Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g)
+void
+_sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g)
 {
   int32_t fg[SNTRUP761_P + SNTRUP761_P - 1];
   int i, j;
@@ -672,14 +653,6 @@ Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
 
 /* ----- rounded polynomials mod q */
 
-static void
-Round (sntrup761_Rq_t out, const sntrup761_Rq_t a)
-{
-  int i;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = a[i] - F3_freeze (a[i]);
-}
-
 /* ----- sorting to generate short polynomial */
 
 static void
@@ -699,32 +672,28 @@ Short_fromlist (sntrup761_R3_t out, const uint32_t *in)
 
 /* ----- underlying hash function */
 
-#define HASH_SIZE 32
-
-/* e.g., b = 0 means out = Hash0(in) */
-static void
-hash_init (struct sha512_ctx *ctx, uint8_t b)
+void
+_sntrup_hash_init (struct sha512_ctx *ctx, uint8_t b)
 {
   sha512_init (ctx);
   sha512_update (ctx, 1, &b);
 }
-#define hash_update sha512_update
 
-static void
-hash_digest (struct sha512_ctx *ctx, uint8_t *digest)
+void
+_sntrup_hash_digest (struct sha512_ctx *ctx, uint8_t *digest)
 {
   uint8_t h[SHA512_DIGEST_SIZE];
   sha512_digest (ctx, h);
-  memcpy (digest, h, HASH_SIZE);
+  memcpy (digest, h, SNTRUP_HASH_SIZE);
 }
 
-static void
-Hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen)
+void
+_sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen)
 {
   struct sha512_ctx ctx;
-  hash_init (&ctx, b);
-  hash_update (&ctx, inlen, in);
-  hash_digest (&ctx, out);
+  _sntrup_hash_init (&ctx, b);
+  _sntrup_hash_update (&ctx, inlen, in);
+  _sntrup_hash_digest (&ctx, out);
 }
 
 /* ----- higher-level randomness */
@@ -743,8 +712,8 @@ urandom32 (void *random_ctx, nettle_random_func * random)
   return out[0] + out[1] + out[2] + out[3];
 }
 
-static void
-Short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
+void
+_sntrup761_short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
 {
   uint32_t L[SNTRUP761_P];
   int i;
@@ -779,19 +748,9 @@ KeyGen (sntrup761_Rq_t h, sntrup761_R3_t f, sntrup761_R3_t ginv,
       if (R3_recip (ginv, g) == 0)
 	break;
     }
-  Short_random (f, random_ctx, random);
+  _sntrup761_short_random (f, random_ctx, random);
   Rq_recip3 (finv, f);		/* always works */
-  Rq_mult_small (h, finv, g);
-}
-
-/* c = Encrypt(r,h) */
-static void
-Encrypt (sntrup761_Rq_t c, const sntrup761_R3_t r, const sntrup761_Rq_t h)
-{
-  sntrup761_Rq_t hr;
-
-  Rq_mult_small (hr, h, r);
-  Round (c, hr);
+  _sntrup761_Rq_mult_small (h, finv, g);
 }
 
 /* r = Decrypt(c,(f,ginv)) */
@@ -804,7 +763,7 @@ Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c,
   int mask;
   int i;
 
-  Rq_mult_small (cf, c, f);
+  _sntrup761_Rq_mult_small (cf, c, f);
   Rq_mult3 (cf3, cf);
   R3_fromRq (e, cf3);
   R3_mult (ev, e, ginv);
@@ -818,12 +777,10 @@ Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c,
 
 /* ----- encoding small polynomials (including short polynomials) */
 
-#define Small_bytes ((SNTRUP761_P+3)/4)
-
 /* these are the only functions that rely on SNTRUP761_P mod 4 = 1 */
 
-static void
-Small_encode (uint8_t *s, const sntrup761_R3_t f)
+void
+_sntrup761_small_encode (uint8_t *s, const sntrup761_R3_t f)
 {
   const int8_t *p;
   int i;
@@ -871,35 +828,10 @@ Rq_encode (uint8_t *s, const sntrup761_Rq_t r)
 
   for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = r[i] + SNTRUP761_Q12;
-  Encode (s, R, M, M, SNTRUP761_P);
-}
-
-static void
-Rq_decode (sntrup761_Rq_t r, const uint8_t *s)
-{
-  uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
-  int i;
-
-  for (i = 0; i < SNTRUP761_P; ++i)
-    M[i] = SNTRUP761_Q;
-  Decode (R, s, M, SNTRUP761_P);
-  for (i = 0; i < SNTRUP761_P; ++i)
-    r[i] = ((int16_t) R[i]) - SNTRUP761_Q12;
+  _sntrup_encode (s, R, M, M, SNTRUP761_P);
 }
 
 /* ----- encoding rounded polynomials */
-
-static void
-Rounded_encode (uint8_t *s, const sntrup761_Rq_t r)
-{
-  uint16_t R[SNTRUP761_P];
-  uint16_t M = (SNTRUP761_Q + 2) / 3;
-  int i;
-
-  for (i = 0; i < SNTRUP761_P; ++i)
-    R[i] = ((r[i] + SNTRUP761_Q12) * 10923) >> 15;
-  Encode (s, R, M, M, SNTRUP761_P);
-}
 
 static void
 Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
@@ -909,15 +841,14 @@ Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
 
   for (i = 0; i < SNTRUP761_P; ++i)
     M[i] = (SNTRUP761_Q + 2) / 3;
-  Decode (R, s, M, SNTRUP761_P);
+  _sntrup_decode (R, s, M, SNTRUP761_P);
   for (i = 0; i < SNTRUP761_P; ++i)
     r[i] = R[i] * 3 - SNTRUP761_Q12;
 }
 
 /* ----- Streamlined NTRU Prime Core plus encoding */
 
-#define Ciphertexts_bytes Rounded_bytes
-#define SecretKeys_bytes (2*Small_bytes)
+#define SecretKeys_bytes (2*SNTRUP761_R3_SIZE)
 
 /* pk,sk = ZKeyGen() */
 static void
@@ -929,19 +860,9 @@ ZKeyGen (uint8_t *pk, uint8_t *sk, void *random_ctx,
 
   KeyGen (h, f, v, random_ctx, random);
   Rq_encode (pk, h);
-  Small_encode (sk, f);
-  sk += Small_bytes;
-  Small_encode (sk, v);
-}
-
-/* C = ZEncrypt(r,pk) */
-static void
-ZEncrypt (uint8_t *c_enc, const sntrup761_R3_t r, const uint8_t *pk)
-{
-  sntrup761_Rq_t h, c;
-  Rq_decode (h, pk);
-  Encrypt (c, r, h);
-  Rounded_encode (c_enc, c);
+  _sntrup761_small_encode (sk, f);
+  sk += SNTRUP761_R3_SIZE;
+  _sntrup761_small_encode (sk, v);
 }
 
 /* r = ZDecrypt(C,sk) */
@@ -952,7 +873,7 @@ ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
   sntrup761_Rq_t c;
 
   Small_decode (f, sk);
-  sk += Small_bytes;
+  sk += SNTRUP761_R3_SIZE;
   Small_decode (v, sk);
   Rounded_decode (c, c_enc);
   Decrypt (r, c, f, v);
@@ -962,36 +883,35 @@ ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
 
 #define Confirm_bytes 32
 
-/* h = HashConfirm(r,pk,cache); cache is Hash4(pk) */
-static void
-HashConfirm (uint8_t *h, const uint8_t *r,
-	     /* const uint8_t *pk, */ const uint8_t *cache)
+void
+_sntrup_hash_confirm (uint8_t *h, const uint8_t *r,
+		      const uint8_t *cache)
 {
   struct sha512_ctx ctx;
-  uint8_t x[HASH_SIZE];
+  uint8_t x[SNTRUP_HASH_SIZE];
 
-  Hash_prefix (x, 3, r, Small_bytes);
-  hash_init (&ctx, 2);
-  hash_update (&ctx, sizeof (x), x);
-  hash_update (&ctx, HASH_SIZE, cache);
-  hash_digest (&ctx, h);
+  _sntrup_hash_prefix (x, 3, r, SNTRUP761_R3_SIZE);
+  _sntrup_hash_init (&ctx, 2);
+  _sntrup_hash_update (&ctx, sizeof (x), x);
+  _sntrup_hash_update (&ctx, SNTRUP_HASH_SIZE, cache);
+  _sntrup_hash_digest (&ctx, h);
 }
 
 /* ----- session-key hash */
 
 /* k = HashSession(b,y,z) */
-static void
-HashSession (uint8_t *k, uint8_t b, const uint8_t *y,
-	     const uint8_t *z)
+void
+_sntrup_hash_session (uint8_t *k, uint8_t b, const uint8_t *y,
+		      const uint8_t *z)
 {
   struct sha512_ctx ctx;
-  uint8_t x[HASH_SIZE];
+  uint8_t x[SNTRUP_HASH_SIZE];
 
-  Hash_prefix (x, 3, y, Small_bytes);
-  hash_init (&ctx, b);
-  hash_update (&ctx, sizeof (x), x);
-  hash_update (&ctx, Ciphertexts_bytes + Confirm_bytes, z);
-  hash_digest (&ctx, k);
+  _sntrup_hash_prefix (x, 3, y, SNTRUP761_R3_SIZE);
+  _sntrup_hash_init (&ctx, b);
+  _sntrup_hash_update (&ctx, sizeof (x), x);
+  _sntrup_hash_update (&ctx, SNTRUP761_CIPHER_SIZE, z);
+  _sntrup_hash_digest (&ctx, k);
 }
 
 /* ----- Streamlined NTRU Prime */
@@ -1007,35 +927,9 @@ sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
   sk += SecretKeys_bytes;
   for (i = 0; i < SNTRUP761_PUBLIC_KEY_SIZE; ++i)
     *sk++ = pk[i];
-  random (random_ctx, Small_bytes, sk);
-  sk += Small_bytes;
-  Hash_prefix (sk, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
-}
-
-/* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
-static void
-Hide (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
-      const uint8_t *pk, const uint8_t *cache)
-{
-  Small_encode (r_enc, r);
-  ZEncrypt (c, r, pk);
-  c += Ciphertexts_bytes;
-  HashConfirm (c, r_enc, cache);
-}
-
-/* c,k = Encap(pk) */
-void
-sntrup761_enc (uint8_t *c, uint8_t *k, const uint8_t *pk,
-	       void *random_ctx, nettle_random_func * random)
-{
-  sntrup761_R3_t r;
-  uint8_t r_enc[Small_bytes];
-  uint8_t cache[HASH_SIZE];
-
-  Hash_prefix (cache, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
-  Short_random (r, random_ctx, random);
-  Hide (c, r_enc, r, pk, cache);
-  HashSession (k, 1, r_enc, c);
+  random (random_ctx, SNTRUP761_R3_SIZE, sk);
+  sk += SNTRUP761_R3_SIZE;
+  _sntrup_hash_prefix (sk, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
 }
 
 /* 0 if matching ciphertext+confirm, else -1 */
@@ -1043,7 +937,7 @@ static int
 Ciphertexts_diff_mask (const uint8_t *c, const uint8_t *c2)
 {
   uint16_t differentbits = 0;
-  int len = Ciphertexts_bytes + Confirm_bytes;
+  int len = SNTRUP761_CIPHER_SIZE;
 
   while (len-- > 0)
     differentbits |= (*c++) ^ (*c2++);
@@ -1056,17 +950,17 @@ sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk)
 {
   const uint8_t *pk = sk + SecretKeys_bytes;
   const uint8_t *rho = pk + SNTRUP761_PUBLIC_KEY_SIZE;
-  const uint8_t *cache = rho + Small_bytes;
+  const uint8_t *cache = rho + SNTRUP761_R3_SIZE;
   sntrup761_R3_t r;
-  uint8_t r_enc[Small_bytes];
-  uint8_t cnew[Ciphertexts_bytes + Confirm_bytes];
+  uint8_t r_enc[SNTRUP761_R3_SIZE];
+  uint8_t cnew[SNTRUP761_CIPHER_SIZE];
   int mask;
   int i;
 
   ZDecrypt (r, c, sk);
-  Hide (cnew, r_enc, r, pk, cache);
+  _sntrup761_encrypt_internal (cnew, r_enc, r, pk, cache);
   mask = Ciphertexts_diff_mask (c, cnew);
-  for (i = 0; i < Small_bytes; ++i)
+  for (i = 0; i < SNTRUP761_R3_SIZE; ++i)
     r_enc[i] ^= mask & (r_enc[i] ^ rho[i]);
-  HashSession (k, 1 + mask, r_enc, c);
+  _sntrup_hash_session (k, 1 + mask, r_enc, c);
 }

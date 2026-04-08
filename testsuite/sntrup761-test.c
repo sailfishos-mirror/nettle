@@ -66,7 +66,7 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
       abort ();
     }
 
-  sntrup761_enc (ct, k1, pk, rngctx, (nettle_random_func *) random_undefined);
+  sntrup761_encrypt (ct, k1, pk, rngctx, (nettle_random_func *) random_undefined);
   mark_bytes_defined (sizeof (ct), ct);
   mark_bytes_defined (sizeof (k1), k1);
   if (!MEMEQ (SNTRUP761_CIPHER_SIZE, ct, xct)
@@ -115,7 +115,7 @@ test_randomized (void)
       unsigned bit;
       sntrup761_generate_keypair (pk, sk, &rng_ctx,
 				  (nettle_random_func *) drbg_ctr_aes256_random);
-      sntrup761_enc (ct, k1, pk, &rng_ctx,
+      sntrup761_encrypt (ct, k1, pk, &rng_ctx,
 		     (nettle_random_func *) drbg_ctr_aes256_random);
       sntrup761_dec (k2, ct, sk);
 

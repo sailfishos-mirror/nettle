@@ -1,0 +1,129 @@
+/* sntrup.h
+
+   Copyright (C) 2023 Simon Josefsson
+   Copyright (C) 2026 Niels Möller
+
+   This file is part of GNU Nettle.
+
+   GNU Nettle is free software: you can redistribute it and/or
+   modify it under the terms of either:
+
+     * the GNU Lesser General Public License as published by the Free
+       Software Foundation; either version 3 of the License, or (at your
+       option) any later version.
+
+   or
+
+     * the GNU General Public License as published by the Free
+       Software Foundation; either version 2 of the License, or (at your
+       option) any later version.
+
+   or both in parallel, as here.
+
+   GNU Nettle is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received copies of the GNU General Public License and
+   the GNU Lesser General Public License along with this program.  If
+   not, see http://www.gnu.org/licenses/.
+*/
+
+/*
+ * Derived from public domain source, written by (in alphabetical order):
+ * - Daniel J. Bernstein
+ * - Chitchanok Chuengsatiansup
+ * - Tanja Lange
+ * - Christine van Vredendaal
+ */
+
+#ifndef NETTLE_SNTRUP_INTERNAL_H
+#define NETTLE_SNTRUP_INTERNAL_H
+
+#include "sha2.h"
+
+/* Name mangling */
+#define _sntrup_hash_init _nettle_sntrup_hash_init
+#define _sntrup_hash_digest _nettle_sntrup_hash_digest
+#define _sntrup_hash_prefix _nettle_sntrup_hash_prefix
+#define _sntrup_hash_session _nettle_sntrup_hash_session
+#define _sntrup_hash_confirm _nettle_sntrup_hash_confirm
+#define _sntrup_encode _nettle_sntrup_encode
+#define _sntrup_decode _nettle_sntrup_decode
+#define _sntrup_mod3 _nettle_sntrup_mod3
+#define _sntrup761_short_random _nettle__sntrup761_short_random
+#define _sntrup761_small_encode _nettle_sntrup761_small_encode
+#define _sntrup761_Rq_mult_small _nettle_sntrup761_Rq_mult_small
+#define _sntrup761_encrypt_internal _nettle_sntrup761_encrypt_internal
+
+/* Defines the coefficient field Z/q, with q = 1 (mod 6). */
+#define SNTRUP761_Q 4591
+/* Elements canonicalized to range |x| <= (q-1)/2 */
+#define SNTRUP761_Q12 ((SNTRUP761_Q-1)/2)
+
+/* Defines polynomial x^p - x - 1, irreducible over Z/q. */
+#define SNTRUP761_P 761
+
+/* Target polynomial weight. */
+#define SNTRUP761_W 286
+
+#define SNTRUP_HASH_SIZE 32
+
+/* e.g., b = 0 means out = Hash0(in) */
+void
+_sntrup_hash_init (struct sha512_ctx *ctx, uint8_t b);
+
+#define _sntrup_hash_update sha512_update
+
+void
+_sntrup_hash_digest (struct sha512_ctx *ctx, uint8_t *digest);
+
+void
+_sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen);
+
+void
+_sntrup_hash_session (uint8_t *k, uint8_t b, const uint8_t *y,
+		      const uint8_t *z);
+
+/* h = HashConfirm(r,pk,cache); cache is Hash4(pk) */
+void
+_sntrup_hash_confirm (uint8_t *h, const uint8_t *r,
+		      const uint8_t *cache);
+
+void
+_sntrup_encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
+		size_t len);
+
+void
+_sntrup_decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
+		size_t len);
+
+int8_t
+_sntrup_mod3 (int16_t x);
+
+/* Polynomial typedefs, passed by reference. */
+/* Coefficients mod 3, represented as -1, 0, 1. */
+typedef int8_t sntrup761_R3_t[SNTRUP761_P];
+
+/* Coefficients mod q, represented as -(q-1)/2, ... , (q-1)/2. */
+typedef int16_t sntrup761_Rq_t[SNTRUP761_P];
+
+/* Octet size of an encoded R3 polynomial. */
+#define SNTRUP761_R3_SIZE ((SNTRUP761_P+3)/4)
+
+void
+_sntrup761_short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random);
+
+void
+_sntrup761_small_encode (uint8_t *s, const sntrup761_R3_t f);
+
+void
+_sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g);
+
+/* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
+void
+_sntrup761_encrypt_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
+			     const uint8_t *pk, const uint8_t *cache);
+
+#endif /* NETTLE_SNTRUP_INTERNAL_H */

@@ -182,7 +182,7 @@ nettle_SOURCES = aes-decrypt-internal.c aes-decrypt-table.c \
 		 slh-fors.c slh-merkle.c slh-wots.c slh-xmss.c \
 		 slh-dsa.c slh-dsa-128s.c slh-dsa-128f.c \
 		 slh-dsa-shake-128s.c slh-dsa-shake-128f.c slh-dsa-sha2-128s.c slh-dsa-sha2-128f.c \
-		 sntrup761.c
+		 sntrup761.c sntrup761-encrypt.c
 
 hogweed_SOURCES = sexp.c sexp-format.c \
 		  sexp-transport.c sexp-transport-format.c \
@@ -291,7 +291,7 @@ DISTFILES = $(SOURCES) $(HEADERS) getopt.h \
 	ctr-internal.h chacha-internal.h hmac-internal.h sha3-internal.h \
 	salsa20-internal.h umac-internal.h hogweed-internal.h \
 	rsa-internal.h pkcs1-internal.h dsa-internal.h eddsa-internal.h \
-	slh-dsa-internal.h \
+	slh-dsa-internal.h sntrup-internal.h \
 	gmp-glue.h ecc-internal.h fat-setup.h oaep.h \
 	mini-gmp.h asm.m4 m4-utils.m4 \
 	nettle.texinfo nettle.info nettle.html nettle.pdf sha-example.c
