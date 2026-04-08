@@ -76,9 +76,9 @@ do { \
 /* Based on supercop-20201130/crypto_sort/int32/portable4/sort.c, but
    using uint32_t rather than int32_t. */
 static void
-crypto_sort_uint32 (uint32_t *x, long long n)
+crypto_sort_uint32 (uint32_t *x, size_t n)
 {
-  long long top, p, q, r, i, j;
+  size_t top, p, q, r, i, j;
 
   if (n < 2)
     return;
@@ -227,7 +227,7 @@ uint32_mod_uint14 (uint32_t x, uint16_t m)
 
 static void
 Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
-	long long len)
+	size_t len)
 {
   if (len == 1)
     {
@@ -244,7 +244,7 @@ Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
       uint16_t M2[(len + 1) / 2];
       uint16_t bottomr[len / 2];
       uint32_t bottomt[len / 2];
-      long long i;
+      size_t i;
       for (i = 0; i < len - 1; i += 2)
 	{
 	  uint32_t m = M[i] * (uint32_t) M[i + 1];
@@ -298,7 +298,7 @@ Decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
 /* 0 <= R[i] < M[i] < 16384 */
 static void
 Encode (uint8_t *out, const uint16_t * R, const uint16_t * M,
-	long long len)
+	size_t len)
 {
   if (len == 1)
     {
@@ -315,7 +315,7 @@ Encode (uint8_t *out, const uint16_t * R, const uint16_t * M,
     {
       uint16_t R2[(len + 1) / 2];
       uint16_t M2[(len + 1) / 2];
-      long long i;
+      size_t i;
       for (i = 0; i < len - 1; i += 2)
 	{
 	  uint32_t m0 = M[i];
