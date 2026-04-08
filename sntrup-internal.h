@@ -49,9 +49,11 @@
 #define _sntrup_hash_prefix _nettle_sntrup_hash_prefix
 #define _sntrup_hash_session _nettle_sntrup_hash_session
 #define _sntrup_hash_confirm _nettle_sntrup_hash_confirm
+#define _sntrup_urandom32 _nettle_sntrup_urandom32
 #define _sntrup_encode _nettle_sntrup_encode
 #define _sntrup_decode _nettle_sntrup_decode
-#define _sntrup_mod3 _nettle_sntrup_mod3
+#define _sntrup_mod_3 _nettle_sntrup_mod_3
+#define _sntrup761_mod_q _nettle_sntrup761_mod_q
 #define _sntrup761_short_random _nettle__sntrup761_short_random
 #define _sntrup761_small_encode _nettle_sntrup761_small_encode
 #define _sntrup761_Rq_mult_small _nettle_sntrup761_Rq_mult_small
@@ -69,6 +71,17 @@
 #define SNTRUP761_W 286
 
 #define SNTRUP_HASH_SIZE 32
+
+/* return -1 if x!=0; else return 0 */
+static inline int
+int16_t_nonzero_mask (int16_t x)
+{
+  uint16_t u = x;		/* 0, else 1...65535 */
+  uint32_t v = u;		/* 0, else 1...65535 */
+  v = -v;			/* 0, else 2^32-65535...2^32-1 */
+  v >>= 31;			/* 0, else 1 */
+  return -v;			/* 0, else -1 */
+}
 
 /* e.g., b = 0 means out = Hash0(in) */
 void
@@ -91,6 +104,9 @@ void
 _sntrup_hash_confirm (uint8_t *h, const uint8_t *r,
 		      const uint8_t *cache);
 
+uint32_t
+_sntrup_urandom32 (void *random_ctx, nettle_random_func * random);
+
 void
 _sntrup_encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
 		size_t len);
@@ -100,7 +116,10 @@ _sntrup_decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
 		size_t len);
 
 int8_t
-_sntrup_mod3 (int16_t x);
+_sntrup_mod_3 (int16_t x);
+
+int16_t
+_sntrup761_mod_q (int32_t x);
 
 /* Polynomial typedefs, passed by reference. */
 /* Coefficients mod 3, represented as -1, 0, 1. */

@@ -50,7 +50,7 @@ Round (sntrup761_Rq_t out, const sntrup761_Rq_t a)
 {
   int i;
   for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = a[i] - _sntrup_mod3 (a[i]);
+    out[i] = a[i] - _sntrup_mod_3 (a[i]);
 }
 
 static void

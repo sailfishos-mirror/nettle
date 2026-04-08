@@ -341,33 +341,12 @@ _sntrup_encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
 
 /* ----- masks */
 
-/* return -1 if x!=0; else return 0 */
-static int
-int16_t_nonzero_mask (int16_t x)
-{
-  uint16_t u = x;		/* 0, else 1...65535 */
-  uint32_t v = u;		/* 0, else 1...65535 */
-  v = -v;			/* 0, else 2^32-65535...2^32-1 */
-  v >>= 31;			/* 0, else 1 */
-  return -v;			/* 0, else -1 */
-}
-
-/* return -1 if x<0; otherwise return 0 */
-static int
-int16_t_negative_mask (int16_t x)
-{
-  uint16_t u = x;
-  u >>= 15;
-  return -(int) u;
-  /* alternative with gcc -fwrapv: */
-  /* x>>15 compiles to CPU's arithmetic right shift */
-}
 
 /* ----- arithmetic mod 3 */
 
 /* F3 is always represented as -1,0,1 */
 int8_t
-_sntrup_mod3 (int16_t x)
+_sntrup_mod_3 (int16_t x)
 {
   uint16_t ux, a, r, p, mask;
   /* x is either an canonical representative of Fq, |x| <= (q-1) / 2,
@@ -393,8 +372,8 @@ _sntrup_mod3 (int16_t x)
 /* always represented as -(q-1)/2...(q-1)/2 */
 /* so ZZ_fromFq is a no-op */
 
-static int16_t
-Fq_freeze (int32_t x)
+int16_t
+_sntrup761_mod_q (int32_t x)
 {
   uint32_t ux, a, r, p, mask;
   /* When called from Rq_mult_small, inputs are limited to w*(q-1) (or
@@ -412,20 +391,6 @@ Fq_freeze (int32_t x)
   r = ux - p  + (mask & SNTRUP761_Q);
   assert_maybe (r < SNTRUP761_Q);
   return (int32_t) r - SNTRUP761_Q12;
-}
-
-static int16_t
-Fq_recip (int16_t a1)
-{
-  int i = 1;
-  int16_t ai = a1;
-
-  while (i < SNTRUP761_Q - 2)
-    {
-      ai = Fq_freeze (a1 * (int32_t) ai);
-      i += 1;
-    }
-  return ai;
 }
 
 /* 0 if Weightw_is(r), else -1 */
@@ -446,7 +411,7 @@ R3_fromRq (sntrup761_R3_t out, const sntrup761_Rq_t r)
 {
   int i;
   for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = _sntrup_mod3 (r[i]);
+    out[i] = _sntrup_mod_3 (r[i]);
 }
 
 /* h = f*g in the ring R3 */
@@ -478,68 +443,7 @@ R3_mult (sntrup761_R3_t h, const sntrup761_R3_t f, const sntrup761_R3_t g)
     }
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    h[i] = _sntrup_mod3(fg[i]);
-}
-
-/* returns 0 if recip succeeded; else -1 */
-static int
-R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
-{
-  int8_t f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
-  int i, loop, delta;
-  int sign, swap, t;
-
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    v[i] = 0;
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    r[i] = 0;
-  r[0] = 1;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    f[i] = 0;
-  f[0] = 1;
-  f[SNTRUP761_P - 1] = f[SNTRUP761_P] = -1;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    g[SNTRUP761_P - 1 - i] = in[i];
-  g[SNTRUP761_P] = 0;
-
-  delta = 1;
-
-  for (loop = 0; loop < 2 * SNTRUP761_P - 1; ++loop)
-    {
-      for (i = SNTRUP761_P; i > 0; --i)
-	v[i] = v[i - 1];
-      v[0] = 0;
-
-      sign = -g[0] * f[0];
-      swap = int16_t_negative_mask (-delta) & int16_t_nonzero_mask (g[0]);
-      delta ^= swap & (delta ^ -delta);
-      delta += 1;
-
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	{
-	  t = swap & (f[i] ^ g[i]);
-	  f[i] ^= t;
-	  g[i] ^= t;
-	  t = swap & (v[i] ^ r[i]);
-	  v[i] ^= t;
-	  r[i] ^= t;
-	}
-
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	g[i] = _sntrup_mod3 (g[i] + sign * f[i]);
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	r[i] = _sntrup_mod3 (r[i] + sign * v[i]);
-
-      for (i = 0; i < SNTRUP761_P; ++i)
-	g[i] = g[i + 1];
-      g[SNTRUP761_P] = 0;
-    }
-
-  sign = f[0];
-  for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = sign * v[SNTRUP761_P - 1 - i];
-
-  return int16_t_nonzero_mask (delta);
+    h[i] = _sntrup_mod_3(fg[i]);
 }
 
 /* ----- polynomials mod q */
@@ -573,7 +477,7 @@ _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup
     }
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    h[i] = Fq_freeze (fg[i]);
+    h[i] = _sntrup761_mod_q (fg[i]);
 }
 
 /* h = 3f in Rq */
@@ -583,72 +487,7 @@ Rq_mult3 (sntrup761_Rq_t h, const sntrup761_Rq_t f)
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    h[i] = Fq_freeze (3 * f[i]);
-}
-
-/* out = 1/(3*in) in Rq */
-/* returns 0 if recip succeeded; else -1 */
-static int
-Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
-{
-  int16_t f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
-  int i, loop, delta;
-  int swap, t;
-  int32_t f0, g0;
-  int16_t scale;
-
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    v[i] = 0;
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    r[i] = 0;
-  r[0] = Fq_recip (3);
-  for (i = 0; i < SNTRUP761_P; ++i)
-    f[i] = 0;
-  f[0] = 1;
-  f[SNTRUP761_P - 1] = f[SNTRUP761_P] = -1;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    g[SNTRUP761_P - 1 - i] = in[i];
-  g[SNTRUP761_P] = 0;
-
-  delta = 1;
-
-  for (loop = 0; loop < 2 * SNTRUP761_P - 1; ++loop)
-    {
-      for (i = SNTRUP761_P; i > 0; --i)
-	v[i] = v[i - 1];
-      v[0] = 0;
-
-      swap = int16_t_negative_mask (-delta) & int16_t_nonzero_mask (g[0]);
-      delta ^= swap & (delta ^ -delta);
-      delta += 1;
-
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	{
-	  t = swap & (f[i] ^ g[i]);
-	  f[i] ^= t;
-	  g[i] ^= t;
-	  t = swap & (v[i] ^ r[i]);
-	  v[i] ^= t;
-	  r[i] ^= t;
-	}
-
-      f0 = f[0];
-      g0 = g[0];
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	g[i] = Fq_freeze (f0 * g[i] - g0 * f[i]);
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	r[i] = Fq_freeze (f0 * r[i] - g0 * v[i]);
-
-      for (i = 0; i < SNTRUP761_P; ++i)
-	g[i] = g[i + 1];
-      g[SNTRUP761_P] = 0;
-    }
-
-  scale = Fq_recip (f[0]);
-  for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = Fq_freeze (scale * (int32_t) v[SNTRUP761_P - 1 - i]);
-
-  return int16_t_nonzero_mask (delta);
+    h[i] = _sntrup761_mod_q (3 * f[i]);
 }
 
 /* ----- rounded polynomials mod q */
@@ -698,8 +537,8 @@ _sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen)
 
 /* ----- higher-level randomness */
 
-static uint32_t
-urandom32 (void *random_ctx, nettle_random_func * random)
+uint32_t
+_sntrup_urandom32 (void *random_ctx, nettle_random_func * random)
 {
   uint8_t c[4];
   uint32_t out[4];
@@ -719,38 +558,8 @@ _sntrup761_short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_fun
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    L[i] = urandom32 (random_ctx, random);
+    L[i] = _sntrup_urandom32 (random_ctx, random);
   Short_fromlist (out, L);
-}
-
-static void
-Small_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
-{
-  int i;
-
-  for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = (((urandom32 (random_ctx, random) & 0x3fffffff) * 3) >> 30) - 1;
-}
-
-/* ----- Streamlined NTRU Prime Core */
-
-/* h,(f,ginv) = KeyGen() */
-static void
-KeyGen (sntrup761_Rq_t h, sntrup761_R3_t f, sntrup761_R3_t ginv,
-	void *random_ctx, nettle_random_func * random)
-{
-  sntrup761_R3_t g;
-  sntrup761_Rq_t finv;
-
-  for (;;)
-    {
-      Small_random (g, random_ctx, random);
-      if (R3_recip (ginv, g) == 0)
-	break;
-    }
-  _sntrup761_short_random (f, random_ctx, random);
-  Rq_recip3 (finv, f);		/* always works */
-  _sntrup761_Rq_mult_small (h, finv, g);
 }
 
 /* r = Decrypt(c,(f,ginv)) */
@@ -819,17 +628,6 @@ Small_decode (sntrup761_R3_t f, const uint8_t *s)
 
 /* ----- encoding general polynomials */
 
-static void
-Rq_encode (uint8_t *s, const sntrup761_Rq_t r)
-{
-  uint16_t R[SNTRUP761_P];
-  uint16_t M = SNTRUP761_Q;
-  int i;
-
-  for (i = 0; i < SNTRUP761_P; ++i)
-    R[i] = r[i] + SNTRUP761_Q12;
-  _sntrup_encode (s, R, M, M, SNTRUP761_P);
-}
 
 /* ----- encoding rounded polynomials */
 
@@ -847,23 +645,6 @@ Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
 }
 
 /* ----- Streamlined NTRU Prime Core plus encoding */
-
-#define SecretKeys_bytes (2*SNTRUP761_R3_SIZE)
-
-/* pk,sk = ZKeyGen() */
-static void
-ZKeyGen (uint8_t *pk, uint8_t *sk, void *random_ctx,
-	 nettle_random_func * random)
-{
-  sntrup761_Rq_t h;
-  sntrup761_R3_t f, v;
-
-  KeyGen (h, f, v, random_ctx, random);
-  Rq_encode (pk, h);
-  _sntrup761_small_encode (sk, f);
-  sk += SNTRUP761_R3_SIZE;
-  _sntrup761_small_encode (sk, v);
-}
 
 /* r = ZDecrypt(C,sk) */
 static void
@@ -916,21 +697,6 @@ _sntrup_hash_session (uint8_t *k, uint8_t b, const uint8_t *y,
 
 /* ----- Streamlined NTRU Prime */
 
-/* pk,sk = KEM_KeyGen() */
-void
-sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
-			    nettle_random_func * random)
-{
-  int i;
-
-  ZKeyGen (pk, sk, random_ctx, random);
-  sk += SecretKeys_bytes;
-  for (i = 0; i < SNTRUP761_PUBLIC_KEY_SIZE; ++i)
-    *sk++ = pk[i];
-  random (random_ctx, SNTRUP761_R3_SIZE, sk);
-  sk += SNTRUP761_R3_SIZE;
-  _sntrup_hash_prefix (sk, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
-}
 
 /* 0 if matching ciphertext+confirm, else -1 */
 static int
@@ -948,7 +714,7 @@ Ciphertexts_diff_mask (const uint8_t *c, const uint8_t *c2)
 void
 sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk)
 {
-  const uint8_t *pk = sk + SecretKeys_bytes;
+  const uint8_t *pk = sk + 2*SNTRUP761_R3_SIZE;
   const uint8_t *rho = pk + SNTRUP761_PUBLIC_KEY_SIZE;
   const uint8_t *cache = rho + SNTRUP761_R3_SIZE;
   sntrup761_R3_t r;
