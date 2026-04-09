@@ -78,23 +78,17 @@ Rounded_encode (uint8_t *s, const sntrup761_Rq_t r)
   _sntrup_encode (s, R, M, M, SNTRUP761_P);
 }
 
-/* c = Encrypt(r,h) */
-static void
-Encrypt (sntrup761_Rq_t c, const sntrup761_R3_t r, const sntrup761_Rq_t h)
-{
-  sntrup761_Rq_t hr;
-
-  _sntrup761_Rq_mult_small (hr, h, r);
-  Round (c, hr);
-}
-
 /* C = ZEncrypt(r,pk) */
 static void
 ZEncrypt (uint8_t *c_enc, const sntrup761_R3_t r, const uint8_t *pk)
 {
+  sntrup761_Rq_t hr;
   sntrup761_Rq_t h, c;
   Rq_decode (h, pk);
-  Encrypt (c, r, h);
+  _sntrup761_Rq_mult_small (hr, h, r);
+  /* FIXME: Both rounding and encoding includes a division by 3.
+     Merge, to divide only once. */
+  Round (c, hr);
   Rounded_encode (c_enc, c);
 }
 
