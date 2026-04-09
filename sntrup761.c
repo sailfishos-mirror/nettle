@@ -393,7 +393,8 @@ _sntrup761_mod_q (int32_t x)
 
 /* ----- polynomials mod q */
 
-/* h = f*g in the ring Rq */
+/* h = f*g in the ring Rq. Tolerates g coeffients outside of the proper
+   range, up to absolute value 6. */
 void
 _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g)
 {
@@ -422,6 +423,8 @@ _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup
     }
 
   for (i = 0; i < SNTRUP761_P; ++i)
+    /* Coeffients to be reduced are bounded by
+       2*6*p*(q-1)/2 = 20957940 < q*q. */
     h[i] = _sntrup761_mod_q (fg[i]);
 }
 

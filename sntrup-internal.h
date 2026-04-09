@@ -125,7 +125,9 @@ int16_t
 _sntrup761_mod_q (int32_t x);
 
 /* Polynomial typedefs, passed by reference. */
-/* Coefficients mod 3, represented as -1, 0, 1. */
+/* Coefficients mod 3, canonically represented as -1, 0, 1. But this
+   type may is also used with values outside of this range during
+   decapsulation. */
 typedef int8_t sntrup761_R3_t[SNTRUP761_P];
 
 /* Coefficients mod q, represented as -(q-1)/2, ... , (q-1)/2. */

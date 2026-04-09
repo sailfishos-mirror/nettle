@@ -66,7 +66,8 @@ R3_fromRq (sntrup761_R3_t out, const sntrup761_Rq_t r)
     out[i] = _sntrup_mod_3 (r[i]);
 }
 
-/* h = f*g in the ring R3 */
+/* h = f*g in the ring R3. Allows non-canonical input, since decoding
+   can produce coefficients with the value 2. */
 static void
 R3_mult (sntrup761_R3_t h, const sntrup761_R3_t f, const sntrup761_R3_t g)
 {
@@ -121,6 +122,8 @@ Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c,
   _sntrup761_Rq_mult_small (cf, c, f);
   Rq_mult3 (cf3, cf);
   R3_fromRq (e, cf3);
+  /* FIXME: Non-canonical values for the ginv coeffients will violate
+     bounds for accumulation and reduction. */
   R3_mult (ev, e, ginv);
 
   mask = Weightw_mask (ev);	/* 0 if weight SNTRUP761_W, else -1 */
@@ -130,6 +133,9 @@ Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c,
     r[i] = ev[i] & ~mask;
 }
 
+/* Decodes a polynomial with coefficients supposedly all being in {-1,
+   0, 1}. But no error handling, so for invalid inputs, resulting
+   coefficients are in {-1, 0, 1, 2 }. */
 static void
 Small_decode (sntrup761_R3_t f, const uint8_t *s)
 {
