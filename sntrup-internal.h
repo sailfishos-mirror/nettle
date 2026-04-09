@@ -72,15 +72,18 @@
 
 #define SNTRUP_HASH_SIZE 32
 
-/* return -1 if x!=0; else return 0 */
+/* Return -1 if high bit set, otherwise zero. */
 static inline int
-int16_t_nonzero_mask (int16_t x)
+uint16_highbit_mask (uint16_t x)
 {
-  uint16_t u = x;		/* 0, else 1...65535 */
-  uint32_t v = u;		/* 0, else 1...65535 */
-  v = -v;			/* 0, else 2^32-65535...2^32-1 */
-  v >>= 31;			/* 0, else 1 */
-  return -v;			/* 0, else -1 */
+  return -(x >> 15);
+}
+
+/* Return -1 if non-zero, otherwise 0. */
+static inline int
+uint16_nonzero_mask (uint16_t x)
+{
+  return uint16_highbit_mask (x | -x);
 }
 
 /* e.g., b = 0 means out = Hash0(in) */

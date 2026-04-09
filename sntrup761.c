@@ -402,7 +402,7 @@ Weightw_mask (sntrup761_R3_t r)
 
   for (i = 0; i < SNTRUP761_P; ++i)
     weight += r[i] & 1;
-  return int16_t_nonzero_mask (weight - SNTRUP761_W);
+  return uint16_nonzero_mask (weight - SNTRUP761_W);
 }
 
 /* R3_fromR(R_fromRq(r)) */

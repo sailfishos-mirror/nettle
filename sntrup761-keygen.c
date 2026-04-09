@@ -68,17 +68,6 @@ Fq_recip (int16_t a1)
   return ai;
 }
 
-/* return -1 if x<0; otherwise return 0 */
-static int
-int16_t_negative_mask (int16_t x)
-{
-  uint16_t u = x;
-  u >>= 15;
-  return -(int) u;
-  /* alternative with gcc -fwrapv: */
-  /* x>>15 compiles to CPU's arithmetic right shift */
-}
-
 /* returns 0 if recip succeeded; else -1 */
 static int
 R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
@@ -109,7 +98,7 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
       v[0] = 0;
 
       sign = -g[0] * f[0];
-      swap = int16_t_negative_mask (-delta) & int16_t_nonzero_mask (g[0]);
+      swap = uint16_highbit_mask (-delta) & uint16_nonzero_mask (g[0]);
       delta ^= swap & (delta ^ -delta);
       delta += 1;
 
@@ -137,7 +126,7 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
   for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = sign * v[SNTRUP761_P - 1 - i];
 
-  return int16_t_nonzero_mask (delta);
+  return uint16_nonzero_mask (delta);
 }
 
 /* out = 1/(3*in) in Rq */
@@ -172,7 +161,7 @@ Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
 	v[i] = v[i - 1];
       v[0] = 0;
 
-      swap = int16_t_negative_mask (-delta) & int16_t_nonzero_mask (g[0]);
+      swap = uint16_highbit_mask (-delta) & uint16_nonzero_mask (g[0]);
       delta ^= swap & (delta ^ -delta);
       delta += 1;
 
@@ -202,7 +191,7 @@ Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
   for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = _sntrup761_mod_q (scale * (int32_t) v[SNTRUP761_P - 1 - i]);
 
-  return int16_t_nonzero_mask (delta);
+  return uint16_nonzero_mask (delta);
 }
 
 static void
