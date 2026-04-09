@@ -211,64 +211,73 @@ uint32_mod_uint14 (uint32_t x, uint16_t m)
 /* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.c */
 
 void
-_sntrup_decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
+_sntrup_decode (uint16_t * out, const uint8_t *S, uint32_t M0, uint32_t M1,
 		size_t len)
 {
   if (len == 1)
     {
-      if (M[0] == 1)
+      if (M1 == 1)
 	*out = 0;
-      else if (M[0] <= 256)
-	*out = uint32_mod_uint14 (S[0], M[0]);
+      else if (M1 <= 256)
+	*out = uint32_mod_uint14 (S[0], M1);
       else
-	*out = uint32_mod_uint14 (S[0] + (((uint16_t) S[1]) << 8), M[0]);
+	*out = uint32_mod_uint14 (S[0] + (((uint16_t) S[1]) << 8), M1);
     }
   if (len > 1)
     {
       uint16_t R2[(len + 1) / 2];
-      uint16_t M2[(len + 1) / 2];
       uint16_t bottomr[len / 2];
-      uint32_t bottomt[len / 2];
+      unsigned c0, c1;
       size_t i;
-      for (i = 0; i < len - 1; i += 2)
+      uint32_t M0n, M1n;
+      for (c0 = 0, M0n = M0 * M0; M0n >= 16384; M0n = (M0n + 255) >> 8)
+	c0++;
+      c1 = 0;
+
+      /* Process all but the last one or two elements. */
+      for (i = 0; i < len - 2; i += 2)
 	{
-	  uint32_t m = M[i] * (uint32_t) M[i + 1];
-	  if (m > 256 * 16383)
-	    {
-	      bottomt[i / 2] = 256 * 256;
-	      bottomr[i / 2] = S[0] + 256 * S[1];
-	      S += 2;
-	      M2[i / 2] = (((m + 255) >> 8) + 255) >> 8;
-	    }
-	  else if (m >= 16384)
-	    {
-	      bottomt[i / 2] = 256;
-	      bottomr[i / 2] = S[0];
-	      S += 1;
-	      M2[i / 2] = (m + 255) >> 8;
-	    }
-	  else
-	    {
-	      bottomt[i / 2] = 1;
-	      bottomr[i / 2] = 0;
-	      M2[i / 2] = m;
-	    }
+	  unsigned j;
+	  uint16_t r;
+	  for (j = r = 0; j < c0; j++)
+	    r |= ((uint16_t)(*S++)) << (8*j);
+	  bottomr[i / 2] = r;
 	}
-      if (i < len)
-	M2[i / 2] = M[i];
-      _sntrup_decode (R2, S, M2, (len + 1) / 2);
-      for (i = 0; i < len - 1; i += 2)
+      if (i == len - 2)
+	{
+	  uint32_t r;
+	  for (c1 = r = 0, M1n = M0 * M1; M1n >= 16384; M1n = (M1n + 255) >> 8, c1++)
+	    r |= ((uint16_t) (*S++)) << (8*c1);
+	  bottomr[i/2] = r;
+	}
+      else
+	M1n = M1;
+
+      _sntrup_decode (R2, S, M0n, M1n, (len + 1) / 2);
+      /* Process all but the last one or two elements, using M0, M0. */
+      for (i = 0; i < len - 2; i += 2)
 	{
 	  uint32_t r = bottomr[i / 2];
 	  uint32_t r1;
 	  uint16_t r0;
-	  r += bottomt[i / 2] * R2[i / 2];
-	  uint32_divmod_uint14 (&r1, &r0, r, M[i]);
-	  r1 = uint32_mod_uint14 (r1, M[i + 1]);	/* only needed for invalid inputs */
+	  r += (uint32_t) R2[i / 2] << (8*c0);
+	  uint32_divmod_uint14 (&r1, &r0, r, M0);
+	  r1 = uint32_mod_uint14 (r1, M0);	/* only needed for invalid inputs */
 	  *out++ = r0;
 	  *out++ = r1;
 	}
-      if (i < len)
+      if (i == len - 2)
+	{
+	  uint32_t r = bottomr[i / 2];
+	  uint32_t r1;
+	  uint16_t r0;
+	  r += (uint32_t) R2[i / 2] << (8*c1);
+	  uint32_divmod_uint14 (&r1, &r0, r, M0);
+	  r1 = uint32_mod_uint14 (r1, M1);	/* only needed for invalid inputs */
+	  *out++ = r0;
+	  *out++ = r1;
+	}
+      else
 	*out++ = R2[i / 2];
     }
 }

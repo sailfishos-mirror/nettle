@@ -115,7 +115,7 @@ _sntrup_encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
 		size_t len);
 
 void
-_sntrup_decode (uint16_t * out, const uint8_t *S, const uint16_t * M,
+_sntrup_decode (uint16_t * out, const uint8_t *S, uint32_t M0, uint32_t M1,
 		size_t len);
 
 int8_t
