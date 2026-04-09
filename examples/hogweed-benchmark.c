@@ -1051,7 +1051,7 @@ bench_sntrup_decrypt (void *p)
 {
   struct sntrup_ctx *ctx = p;
   uint8_t session_key[SNTRUP_SESSION_KEY_SIZE];
-  sntrup761_dec (session_key, ctx->ciphertext, ctx->secret_key);
+  sntrup761_decap (session_key, ctx->ciphertext, ctx->secret_key);
 }
 
 static void

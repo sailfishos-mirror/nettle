@@ -79,7 +79,7 @@ test_sntrup (struct drbg_ctr_aes256_ctx *rngctx,
       abort ();
     }
   mark_bytes_undefined (sizeof (sk), sk);
-  sntrup761_dec (k2, ct, sk);
+  sntrup761_decap (k2, ct, sk);
   mark_bytes_defined (sizeof (k2), k2);
 
   if (!MEMEQ (SNTRUP_SESSION_KEY_SIZE, k2, xk))
@@ -117,7 +117,7 @@ test_randomized (void)
 				  (nettle_random_func *) drbg_ctr_aes256_random);
       sntrup761_encap (ct, k1, pk, &rng_ctx,
 		       (nettle_random_func *) drbg_ctr_aes256_random);
-      sntrup761_dec (k2, ct, sk);
+      sntrup761_decap (k2, ct, sk);
 
       if (!MEMEQ (SNTRUP_SESSION_KEY_SIZE, k1, k2))
 	{
@@ -126,7 +126,7 @@ test_randomized (void)
 	}
       bit = count % (SNTRUP761_CIPHER_SIZE * 8);
       ct[bit/8] ^= 1 << (bit % 8);
-      sntrup761_dec (k2, ct, sk);
+      sntrup761_decap (k2, ct, sk);
       if (MEMEQ (SNTRUP_SESSION_KEY_SIZE, k1, k2))
 	{
 	  printf ("sntrup761 failed with modified ciphertext, test %u\n", count);
