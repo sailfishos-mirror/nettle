@@ -46,14 +46,6 @@
 #include "sntrup-internal.h"
 
 static void
-Round (sntrup761_Rq_t out, const sntrup761_Rq_t a)
-{
-  int i;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = a[i] - _sntrup_mod_3 (a[i]);
-}
-
-static void
 Rq_decode (sntrup761_Rq_t r, const uint8_t *s)
 {
   uint16_t R[SNTRUP761_P], M[SNTRUP761_P];
@@ -66,15 +58,41 @@ Rq_decode (sntrup761_Rq_t r, const uint8_t *s)
     r[i] = ((int16_t) R[i]) - SNTRUP761_Q12;
 }
 
+static uint16_t
+div_3 (uint16_t x)
+{
+  uint16_t a, p, mask;
+  /* Magic constant is ceil (2^16 / 3). */
+  a = ((uint32_t) 21846 * x) >> 16;
+  p = 3 * a;
+  mask = - (uint16_t) (p > x);
+  return a + mask;
+}
+
+/* Short-circuit rounding followed by exact division by 3. Rounding
+   means computing
+
+     u = x + (q-1)/2 + 1 (note (q-1)/2 =0 (mod 3))
+     a = floor (u/3)
+     r = u - 3*a - 1
+     x' = x - r
+
+   For encoding this rounded value, we compute
+
+     (x' + (q-1)/2)3,
+
+   but this is the same as the quotient a, so let us just compute
+   that.
+*/
 static void
-Rounded_encode (uint8_t *s, const sntrup761_Rq_t r)
+Round_and_encode (uint8_t *s, const sntrup761_Rq_t r)
 {
   uint16_t R[SNTRUP761_P];
   uint16_t M = (SNTRUP761_Q + 2) / 3;
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
-    R[i] = ((r[i] + SNTRUP761_Q12) * 10923) >> 15;
+    R[i] = div_3 (r[i] + SNTRUP761_Q12 + 1);
   _sntrup_encode (s, R, M, M, SNTRUP761_P);
 }
 
@@ -83,13 +101,10 @@ static void
 ZEncrypt (uint8_t *c_enc, const sntrup761_R3_t r, const uint8_t *pk)
 {
   sntrup761_Rq_t hr;
-  sntrup761_Rq_t h, c;
+  sntrup761_Rq_t h;
   Rq_decode (h, pk);
   _sntrup761_Rq_mult_small (hr, h, r);
-  /* FIXME: Both rounding and encoding includes a division by 3.
-     Merge, to divide only once. */
-  Round (c, hr);
-  Rounded_encode (c_enc, c);
+  Round_and_encode (c_enc, hr);
 }
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
