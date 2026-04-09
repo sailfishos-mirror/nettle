@@ -1021,8 +1021,8 @@ bench_sntrup_init (unsigned size)
   knuth_lfib_init (&ctx->lfib, 1);
   sntrup761_generate_keypair (ctx->public_key, ctx->secret_key,
 			      &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
-  sntrup761_encrypt (ctx->ciphertext, session_key, ctx->public_key,
-		     &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
+  sntrup761_encap (ctx->ciphertext, session_key, ctx->public_key,
+		   &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
 
   return ctx;
 }
@@ -1042,8 +1042,8 @@ bench_sntrup_encrypt (void *p)
 {
   struct sntrup_ctx *ctx = p;
   uint8_t session_key[SNTRUP_SESSION_KEY_SIZE];
-  sntrup761_encrypt (ctx->ciphertext, session_key, ctx->public_key,
-		     &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
+  sntrup761_encap (ctx->ciphertext, session_key, ctx->public_key,
+		   &ctx->lfib,(nettle_random_func *)knuth_lfib_random);
 }
 
 static void

@@ -57,7 +57,7 @@
 #define _sntrup761_short_random _nettle__sntrup761_short_random
 #define _sntrup761_small_encode _nettle_sntrup761_small_encode
 #define _sntrup761_Rq_mult_small _nettle_sntrup761_Rq_mult_small
-#define _sntrup761_encrypt_internal _nettle_sntrup761_encrypt_internal
+#define _sntrup761_encap_internal _nettle_sntrup761_encap_internal
 
 /* Defines the coefficient field Z/q, with q = 1 (mod 6). */
 #define SNTRUP761_Q 4591
@@ -145,7 +145,7 @@ _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
 void
-_sntrup761_encrypt_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
-			     const uint8_t *pk, const uint8_t *cache);
+_sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
+			   const uint8_t *pk, const uint8_t *cache);
 
 #endif /* NETTLE_SNTRUP_INTERNAL_H */

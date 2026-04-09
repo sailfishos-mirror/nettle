@@ -50,7 +50,7 @@ extern "C"
 
 /* Name mangling */
 #define sntrup761_generate_keypair nettle_sntrup761_generate_keypair
-#define sntrup761_encrypt nettle_sntrup761_encrypt
+#define sntrup761_encap nettle_sntrup761_encap
 #define sntrup761_dec nettle_sntrup761_dec
 
 #define SNTRUP761_PRIVATE_KEY_SIZE 1763
@@ -63,8 +63,8 @@ sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
 			    nettle_random_func *random);
 
 void
-sntrup761_encrypt (uint8_t *c, uint8_t *k, const uint8_t *pk,
-		   void *random_ctx, nettle_random_func *random);
+sntrup761_encap (uint8_t *c, uint8_t *k, const uint8_t *pk,
+		 void *random_ctx, nettle_random_func *random);
 
 void
 sntrup761_dec (uint8_t *k, const uint8_t *c, const uint8_t *sk);

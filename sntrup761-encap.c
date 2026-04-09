@@ -1,4 +1,4 @@
-/* sntrup761.c
+/* sntrup761-encap.c
 
    Copyright (C) 2023 Simon Josefsson
    Copyright (C) 2026 Niels Möller
@@ -100,8 +100,8 @@ ZEncrypt (uint8_t *c_enc, const sntrup761_R3_t r, const uint8_t *pk)
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
 void
-_sntrup761_encrypt_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
-			     const uint8_t *pk, const uint8_t *cache)
+_sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
+			   const uint8_t *pk, const uint8_t *cache)
 {
   _sntrup761_small_encode (r_enc, r);
   ZEncrypt (c, r, pk);
@@ -110,8 +110,8 @@ _sntrup761_encrypt_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
 
 /* c,k = Encap(pk) */
 void
-sntrup761_encrypt (uint8_t *c, uint8_t *k, const uint8_t *pk,
-		   void *random_ctx, nettle_random_func * random)
+sntrup761_encap (uint8_t *c, uint8_t *k, const uint8_t *pk,
+		 void *random_ctx, nettle_random_func * random)
 {
   sntrup761_R3_t r;
   uint8_t r_enc[SNTRUP761_R3_SIZE];
@@ -119,6 +119,6 @@ sntrup761_encrypt (uint8_t *c, uint8_t *k, const uint8_t *pk,
 
   _sntrup_hash_prefix (cache, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
   _sntrup761_short_random (r, random_ctx, random);
-  _sntrup761_encrypt_internal (c, r_enc, r, pk, cache);
+  _sntrup761_encap_internal (c, r_enc, r, pk, cache);
   _sntrup_hash_session (k, 1, r_enc, c);
 }
