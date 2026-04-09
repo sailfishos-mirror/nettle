@@ -96,24 +96,16 @@ Round_and_encode (uint8_t *s, const sntrup761_Rq_t r)
   _sntrup_encode (s, R, M, M, SNTRUP761_P);
 }
 
-/* C = ZEncrypt(r,pk) */
-static void
-ZEncrypt (uint8_t *c_enc, const sntrup761_R3_t r, const uint8_t *pk)
-{
-  sntrup761_Rq_t hr;
-  sntrup761_Rq_t h;
-  Rq_decode (h, pk);
-  _sntrup761_Rq_mult_small (hr, h, r);
-  Round_and_encode (c_enc, hr);
-}
-
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
 void
 _sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
 			   const uint8_t *pk, const uint8_t *cache)
 {
+  sntrup761_Rq_t t;
   _sntrup761_small_encode (r_enc, r);
-  ZEncrypt (c, r, pk);
+  Rq_decode (t, pk);
+  _sntrup761_Rq_mult_small (t, t, r);
+  Round_and_encode (c, t);
   _sntrup_hash_confirm (c + SNTRUP761_CIPHER_SIZE - SNTRUP_HASH_SIZE, r_enc, cache);
 }
 
