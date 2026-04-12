@@ -282,71 +282,77 @@ _sntrup_decode (uint16_t * out, const uint8_t *S, uint32_t M0, uint32_t M1,
     }
 }
 
-/* from supercop-20201130/crypto_kem/sntrup761/ref/Encode.h */
-
-/* Encode(s,R,M,len) */
-/* assumes 0 <= R[i] < M[i] < 16384 */
-
-/* from supercop-20201130/crypto_kem/sntrup761/ref/Encode.c */
-
-/* 0 <= R[i] < M0 < 16384 for 0 <= i < len - 1,
-   0 <= R[len -l] < M1 < 16384
- */
-void
-_sntrup_encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
-		size_t len)
+struct sntrup_encode_step
+_sntrup761_encode_Rq[SNTRUP761_ENCODE_STEPS] =
 {
-  if (len == 1)
-    {
-      uint16_t r = R[0];
-      uint16_t m = M1;
-      while (m > 1)
-	{
-	  *out++ = r;
-	  r >>= 8;
-	  m = (m + 255) >> 8;
-	}
-    }
-  if (len > 1)
-    {
-      uint16_t R2[(len + 1) / 2];
-      uint32_t M2;
-      unsigned c0;
-      size_t i;
-      for (c0 = 0, M2 = M0 * M0; M2 >= 16384; M2 = (M2 + 255) >> 8)
-	c0++;
+  { 761, 4591, 4591, 935518, 935518,  2, 0 },
+  { 381, 322, 4591, 13338407, 935518,  1, 0 },
+  { 191, 406, 4591, 10578737, 935518,  1, 0 },
+  { 96, 644, 4591, 6669203, 935518,  1, 1 },
+  { 48, 1621, 11550, 2649578, 371858,  1, 2 },
+  { 24, 10265, 286, 418408, 15017368,  2, 1 },
+  { 12, 1608, 11468, 2670999, 374517,  1, 2 },
+  { 6, 10101, 282, 425202, 15230380,  2, 1 },
+  { 3, 1557, 11127, 2758488, 385995,  1, 0 },
+  { 2, 9470, 11127, 453534, 385995,  2, 2 },
+  { 1, 1608, 0, 0, 0, 2, 0 },
+};
 
-      /* Process all but the last one or two elements, using M0, M0. */
-      for (i = 0; i < len - 2; i += 2)
+struct sntrup_encode_step
+_sntrup761_encode_rounded[SNTRUP761_ENCODE_STEPS] =
+{
+  { 761, 1531, 1531, 2805334, 2805334,  1, 0 },
+  { 381, 9157, 1531, 469036, 2805334,  2, 0 },
+  { 191, 1280, 1531, 3355443, 2805334,  1, 0 },
+  { 96, 6400, 1531, 671088, 2805334,  2, 2 },
+  { 48, 625, 150, 6871947, 28633115,  1, 1 },
+  { 24, 1526, 367, 2814526, 11702908,  1, 1 },
+  { 12, 9097, 2188, 472130, 1962964,  2, 2 },
+  { 6, 1263, 304, 3400607, 14128181,  1, 1 },
+  { 3, 6232, 1500, 689179, 2863311,  2, 0 },
+  { 2, 593, 1500, 7242777, 2863311,  1, 1 },
+  { 1, 3475, 0, 0, 0, 2, 0 },
+};
+
+/* Clobbers R during encoding. */
+void
+_sntrup_encode (const struct sntrup_encode_step *step,
+		uint8_t *out, uint16_t * R)
+{
+  for (;; step++)
+    {
+      size_t n = step->n;
+      size_t i;
+      if (n == 1)
 	{
-	  uint32_t r = R[i] + R[i + 1] * M0;
 	  unsigned j;
-	  for (j = 0; j < c0; j++, r >>= 8)
+	  uint16_t r;
+	  for (j = 0, r = R[0]; j < step->M0_count; j++, r >>= 8)
 	    *out++ = r;
-	  R2[i / 2] = r;
+	  return;
 	}
-      /* Last two elements processed using M0, M1. */
-      if (i == len - 2)
+      /* Process all but the last one or two elements, based on M0, M0. */
+      for (i = 0; i < n - 2; i += 2)
 	{
-	  uint32_t r = R[i] + R[i + 1] * M0;
-	  for (M1 *= M0; M1 >= 16384; M1 = (M1 + 255) >> 8)
-	    {
-	      *out++ = r;
-	      r >>= 8;
-	    }
-	  R2[i / 2] = r;
+	  uint32_t r = R[i] + R[i + 1] * step->M0;
+	  unsigned j;
+	  for (j = 0; j < step->M0_count; j++, r >>= 8)
+	    *out++ = r;
+	  R[i / 2] = r;
+	}
+      /* Process last two elements, based on M0, M1. */
+      if (i == n - 2)
+	{
+	  uint32_t r = R[i] + R[i + 1] * step->M0;
+	  unsigned j;
+	  for (j = 0; j < step->M1_count; j++, r >>= 8)
+	    *out++ = r;
+	  R[i / 2] = r;
 	}
       else
-	R2[i / 2] = R[i];
-
-      _sntrup_encode (out, R2, M2, M1, (len + 1) / 2);
+	R[i / 2] = R[i];
     }
 }
-
-/* from supercop-20201130/crypto_kem/sntrup761/ref/kem.c */
-
-/* ----- masks */
-
 
 /* ----- arithmetic mod 3 */
 

@@ -87,12 +87,11 @@ static void
 Round_and_encode (uint8_t *s, const sntrup761_Rq_t r)
 {
   uint16_t R[SNTRUP761_P];
-  uint16_t M = (SNTRUP761_Q + 2) / 3;
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = div_3 (r[i] + SNTRUP761_Q12 + 1);
-  _sntrup_encode (s, R, M, M, SNTRUP761_P);
+  _sntrup_encode (_sntrup761_encode_rounded, s, R);
 }
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */

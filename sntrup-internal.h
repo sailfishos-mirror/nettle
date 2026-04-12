@@ -58,6 +58,8 @@
 #define _sntrup761_small_encode _nettle_sntrup761_small_encode
 #define _sntrup761_Rq_mult_small _nettle_sntrup761_Rq_mult_small
 #define _sntrup761_encap_internal _nettle_sntrup761_encap_internal
+#define _sntrup761_encode_Rq _nettle_sntrup761_encode_Rq
+#define _sntrup761_encode_rounded _nettle_sntrup761_encode_rounded
 
 /* Defines the coefficient field Z/q, with q = 1 (mod 6). */
 #define SNTRUP761_Q 4591
@@ -110,9 +112,26 @@ _sntrup_hash_confirm (uint8_t *h, const uint8_t *r,
 uint32_t
 _sntrup_urandom32 (void *random_ctx, nettle_random_func * random);
 
+struct sntrup_encode_step
+{
+  size_t n;
+  uint16_t M0;
+  uint16_t M1;
+  uint32_t M0_inv;
+  uint32_t M1_inv;
+  unsigned char M0_count;
+  unsigned char M1_count;
+};
+
+#define SNTRUP761_ENCODE_STEPS 11
+
+extern struct sntrup_encode_step
+_sntrup761_encode_Rq[SNTRUP761_ENCODE_STEPS];
+extern struct sntrup_encode_step
+_sntrup761_encode_rounded[SNTRUP761_ENCODE_STEPS];
+
 void
-_sntrup_encode (uint8_t *out, const uint16_t * R, uint32_t M0, uint32_t M1,
-		size_t len);
+_sntrup_encode (const struct sntrup_encode_step *step, uint8_t *out, uint16_t * R);
 
 void
 _sntrup_decode (uint16_t * out, const uint8_t *S, uint32_t M0, uint32_t M1,

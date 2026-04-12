@@ -198,12 +198,11 @@ static void
 Rq_encode (uint8_t *s, const sntrup761_Rq_t r)
 {
   uint16_t R[SNTRUP761_P];
-  uint16_t M = SNTRUP761_Q;
   int i;
 
   for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = r[i] + SNTRUP761_Q12;
-  _sntrup_encode (s, R, M, M, SNTRUP761_P);
+  _sntrup_encode (_sntrup761_encode_Rq, s, R);
 }
 
 /* h,(f,ginv) = KeyGen() */
