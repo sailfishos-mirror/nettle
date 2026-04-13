@@ -6,7 +6,7 @@ invert (unsigned x)
 {
   /* Return ceil(2^32 / x) = floor ((2^32 + x-1) / x) = 1 + floor
      ((2^32-1) / x. */
-  return (uint32_t) -1 / x;
+  return 1 + (uint32_t) -1 / x;
 }
 
 static void
