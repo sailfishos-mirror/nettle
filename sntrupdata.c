@@ -22,17 +22,18 @@ output_encoding (const char *name, unsigned n, unsigned m)
       printf ("  { %u, %u, %u, %u, %u, ", n, M0, M1, invert(M0), invert(M1));
       c1 = 0;
       if (!(n & 1))
-	for (M1 *= M0; M1 >= 16384; M1 = (M1 + 255) >> 8)
-	  c1++;
+	{
+	  for (M1 *= M0; M1 >= 16384; M1 = (M1 + 255) >> 8)
+	    c1++;
+	  if (n == 2)
+	    /* Add count for final element. */
+	    for (; M1 > 1; M1 >>= 8)
+	      c1++;
+	}
       for (c0 = 0, M0 *= M0; M0 >= 16384; M0 = (M0 + 255) >> 8)
 	c0++;
       printf (" %u, %u },\n", c0, c1);
     }
-  printf ("  { %u, %u, ", n, M1);
-  for (c = 0; M1 > 0; M1 >>= 8)
-    c++;
-
-  printf ("%u, %u, %u, %u, %u }\n", 0, 0, 0, c, 0);
   printf ("};\n");
 }
 

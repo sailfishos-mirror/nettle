@@ -123,7 +123,7 @@ struct sntrup_encoding_step
   unsigned char M1_count;
 };
 
-#define SNTRUP761_ENCODING_STEPS 11
+#define SNTRUP761_ENCODING_STEPS 10
 
 extern struct sntrup_encoding_step
 _sntrup761_encoding_Rq[SNTRUP761_ENCODING_STEPS];

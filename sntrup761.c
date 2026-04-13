@@ -293,14 +293,7 @@ _sntrup_encode (const struct sntrup_encoding_step *step,
     {
       size_t n = step->n;
       size_t i;
-      if (n == 1)
-	{
-	  unsigned j;
-	  uint16_t r;
-	  for (j = 0, r = R[0]; j < step->M0_count; j++, r >>= 8)
-	    *out++ = r;
-	  return;
-	}
+
       /* Process all but the last one or two elements, based on M0, M0. */
       for (i = 0; i < n - 2; i += 2)
 	{
@@ -310,13 +303,18 @@ _sntrup_encode (const struct sntrup_encoding_step *step,
 	    *out++ = r;
 	  R[i / 2] = r;
 	}
-      /* Process last two elements, based on M0, M1. */
+
       if (i == n - 2)
 	{
+	  /* Process last two elements, based on M0, M1. */
 	  uint32_t r = R[i] + R[i + 1] * step->M0;
 	  unsigned j;
 	  for (j = 0; j < step->M1_count; j++, r >>= 8)
 	    *out++ = r;
+
+	  if (i == 0)
+	    break;
+
 	  R[i / 2] = r;
 	}
       else
