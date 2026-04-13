@@ -291,7 +291,7 @@ DISTFILES = $(SOURCES) $(HEADERS) getopt.h \
 	ctr-internal.h chacha-internal.h hmac-internal.h sha3-internal.h \
 	salsa20-internal.h umac-internal.h hogweed-internal.h \
 	rsa-internal.h pkcs1-internal.h dsa-internal.h eddsa-internal.h \
-	slh-dsa-internal.h sntrup-internal.h \
+	slh-dsa-internal.h sntrup-internal.h sntrup761-encoding.h \
 	gmp-glue.h ecc-internal.h fat-setup.h oaep.h \
 	mini-gmp.h asm.m4 m4-utils.m4 \
 	nettle.texinfo nettle.info nettle.html nettle.pdf sha-example.c
@@ -452,6 +452,12 @@ ecc-secp224r1.$(OBJEXT): ecc-secp224r1.h
 ecc-secp256r1.$(OBJEXT): ecc-secp256r1.h
 ecc-secp384r1.$(OBJEXT): ecc-secp384r1.h
 ecc-secp521r1.$(OBJEXT): ecc-secp521r1.h
+
+sntrup761-encoding.h: sntrupdata.c
+	$(MAKE) sntrupdata$(EXEEXT_FOR_BUILD)
+	./sntrupdata$(EXEEXT_FOR_BUILD) > $(srcdir)/$(@F)T && mv $(srcdir)/$(@F)T $(srcdir)/$(@F)
+
+sntrup761.$(OBJEXT): sntrup761-encoding.h
 
 # Texinfo rules
 %.info: %.texinfo

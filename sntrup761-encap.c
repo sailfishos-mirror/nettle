@@ -91,7 +91,7 @@ Round_and_encode (uint8_t *s, const sntrup761_Rq_t r)
 
   for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = div_3 (r[i] + SNTRUP761_Q12 + 1);
-  _sntrup_encode (_sntrup761_encode_rounded, s, R);
+  _sntrup_encode (_sntrup761_encoding_rounded, s, R);
 }
 
 /* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */

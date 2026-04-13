@@ -202,7 +202,7 @@ Rq_encode (uint8_t *s, const sntrup761_Rq_t r)
 
   for (i = 0; i < SNTRUP761_P; ++i)
     R[i] = r[i] + SNTRUP761_Q12;
-  _sntrup_encode (_sntrup761_encode_Rq, s, R);
+  _sntrup_encode (_sntrup761_encoding_Rq, s, R);
 }
 
 /* h,(f,ginv) = KeyGen() */

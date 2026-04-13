@@ -10,12 +10,12 @@ invert (unsigned x)
 }
 
 static void
-output_encoding (unsigned n, unsigned m)
+output_encoding (const char *name, unsigned n, unsigned m)
 {
   uint32_t M0, M1;
   unsigned c;
 
-  printf ("{\n");
+  printf ("struct sntrup_encoding_step\n%s[SNTRUP761_ENCODING_STEPS] =\n{\n", name);
   for (M0 = M1 = m; n > 1; n = (n+1)/2)
     {
       unsigned c0, c1;
@@ -41,6 +41,6 @@ main (void)
 {
   unsigned Q = 4591;
   unsigned P = 761;
-  output_encoding (P, Q);
-  output_encoding (P, (Q+2)/3);
+  output_encoding ("_sntrup761_encoding_Rq", P, Q);
+  output_encoding ("_sntrup761_encoding_rounded", P, (Q+2)/3);
 }
