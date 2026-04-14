@@ -109,28 +109,6 @@ Rq_mult3 (sntrup761_Rq_t h, const sntrup761_Rq_t f)
     h[i] = _sntrup761_mod_q (3 * f[i]);
 }
 
-/* r = Decrypt(c,(f,ginv)) */
-static void
-Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c,
-	 const sntrup761_R3_t f, const sntrup761_R3_t ginv)
-{
-  sntrup761_Rq_t cf, cf3;
-  sntrup761_R3_t e, ev;
-  int mask;
-  int i;
-
-  _sntrup761_Rq_mult_small (cf, c, f);
-  Rq_mult3 (cf3, cf);
-  R3_fromRq (e, cf3);
-  R3_mult (ev, e, ginv);
-
-  mask = Weightw_mask (ev);	/* 0 if weight SNTRUP761_W, else -1 */
-  for (i = 0; i < SNTRUP761_W; ++i)
-    r[i] = ((ev[i] ^ 1) & ~mask) ^ 1;
-  for (i = SNTRUP761_W; i < SNTRUP761_P; ++i)
-    r[i] = ev[i] & ~mask;
-}
-
 /* Decodes a polynomial with coefficients supposedly all being in {-1,
    0, 1}. Invalid inputs, corresponding to the value 2, are
    canonicalized to -1. */
@@ -179,14 +157,28 @@ Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
 static void
 ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
 {
-  sntrup761_R3_t f, v;
+  sntrup761_R3_t f, ginv;
   sntrup761_Rq_t c;
+  sntrup761_Rq_t cf, cf3;
+  sntrup761_R3_t e, ev;
+  int mask;
+  int i;
 
   Small_decode (f, sk);
   sk += SNTRUP761_R3_SIZE;
-  Small_decode (v, sk);
+  Small_decode (ginv, sk);
   Rounded_decode (c, c_enc);
-  Decrypt (r, c, f, v);
+
+  _sntrup761_Rq_mult_small (cf, c, f);
+  Rq_mult3 (cf3, cf);
+  R3_fromRq (e, cf3);
+  R3_mult (ev, e, ginv);
+
+  mask = Weightw_mask (ev);	/* 0 if weight SNTRUP761_W, else -1 */
+  for (i = 0; i < SNTRUP761_W; ++i)
+    r[i] = ((ev[i] ^ 1) & ~mask) ^ 1;
+  for (i = SNTRUP761_W; i < SNTRUP761_P; ++i)
+    r[i] = ev[i] & ~mask;
 }
 
 static int
