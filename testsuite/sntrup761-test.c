@@ -32,6 +32,7 @@
 #include "testutils.h"
 
 #include "sntrup.h"
+#include "sntrup-internal.h"
 
 #include "drbg-ctr.h"
 
@@ -113,6 +114,7 @@ test_randomized (void)
       uint8_t k1[SNTRUP_SESSION_KEY_SIZE];
       uint8_t k2[SNTRUP_SESSION_KEY_SIZE];
       unsigned bit;
+      size_t i;
       sntrup761_generate_keypair (pk, sk, &rng_ctx,
 				  (nettle_random_func *) drbg_ctr_aes256_random);
       sntrup761_encap (ct, k1, pk, &rng_ctx,
@@ -124,6 +126,21 @@ test_randomized (void)
 	  printf ("sntrup761 failed, test %u\n", count);
 	  abort ();
 	}
+      /* Decanonicalize secret key, replacing all 00 coeffs by 11. */
+      for (i = 0; i < 2 * SNTRUP761_R3_SIZE; i++)
+	{
+	  uint8_t mask;
+	  for (mask = 0xc0; mask > 0; mask >>= 2)
+	    if ((sk[i] & mask) == 0)
+	      sk[i] |= mask;
+	}
+      sntrup761_decap (k2, ct, sk);
+
+      if (!MEMEQ (SNTRUP_SESSION_KEY_SIZE, k1, k2))
+	{
+	  printf ("sntrup761 with non-canonical secret key failed, test %u\n", count);
+	  abort ();
+	}
       bit = count % (SNTRUP761_CIPHER_SIZE * 8);
       ct[bit/8] ^= 1 << (bit % 8);
       sntrup761_decap (k2, ct, sk);
@@ -132,6 +149,7 @@ test_randomized (void)
 	  printf ("sntrup761 failed with modified ciphertext, test %u\n", count);
 	  abort ();
 	}
+
     }
 }
 

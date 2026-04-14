@@ -122,8 +122,6 @@ Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c,
   _sntrup761_Rq_mult_small (cf, c, f);
   Rq_mult3 (cf3, cf);
   R3_fromRq (e, cf3);
-  /* FIXME: Non-canonical values for the ginv coeffients will violate
-     bounds for accumulation and reduction. */
   R3_mult (ev, e, ginv);
 
   mask = Weightw_mask (ev);	/* 0 if weight SNTRUP761_W, else -1 */
@@ -134,8 +132,8 @@ Decrypt (sntrup761_R3_t r, const sntrup761_Rq_t c,
 }
 
 /* Decodes a polynomial with coefficients supposedly all being in {-1,
-   0, 1}. But no error handling, so for invalid inputs, resulting
-   coefficients are in {-1, 0, 1, 2 }. */
+   0, 1}. Invalid inputs, corresponding to the value 2, are
+   canonicalized to -1. */
 static void
 Small_decode (sntrup761_R3_t f, const uint8_t *s)
 {
@@ -145,6 +143,11 @@ Small_decode (sntrup761_R3_t f, const uint8_t *s)
   for (i = 0, p = f; i < SNTRUP761_P / 4; ++i)
     {
       uint8_t x = *s++;
+      /* All bit pairs should be one of 00, 01, 10. If invalid value
+	 11 occurs, replace with 00 (reduction mod 3). */
+      uint8_t invalid = x & (x >> 1) & 0x55;
+      x &= ~(3*invalid);
+
       *p++ = ((int8_t) (x & 3)) - 1;
       x >>= 2;
       *p++ = ((int8_t) (x & 3)) - 1;
@@ -153,7 +156,11 @@ Small_decode (sntrup761_R3_t f, const uint8_t *s)
       x >>= 2;
       *p++ = ((int8_t) (x & 3)) - 1;
     }
-  *p = ((int8_t) (*s & 3)) - 1;
+  {
+    uint8_t x = *s;
+    uint8_t valid = (x & (x >> 1) & 1) ^ 1;
+    *p = ((int8_t) (x & (3*valid))) - 1;
+  }
 }
 
 static void
