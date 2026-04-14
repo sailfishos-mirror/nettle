@@ -142,7 +142,7 @@ uint32_16_divmod (uint16_t *rp, uint32_t u, uint16_t d, uint32_t dinv)
   q = ((uint64_t) dinv * u) >> 32;
   p = q * d;
   r = u - p; /* Interpreted as two's complement, |r| < d */
-  mask = - (uint32_t) (p > u);
+  mask = - (r >> 31);
   *rp = r + (mask & d);
   assert_maybe (*rp < d);
   return q + mask;
@@ -222,32 +222,31 @@ _sntrup_encode (const struct sntrup_encoding_step *step,
     {
       size_t len = step->len;
       size_t i;
+      uint32_t r;
 
       /* Process all but the last one or two elements, based on M0, M0. */
       for (i = 0; i < len - 2; i += 2)
 	{
-	  uint32_t r = R[i] + R[i + 1] * step->M0;
 	  unsigned j;
+	  r = R[i] + R[i + 1] * step->M0;
 	  for (j = 0; j < step->M0_count; j++, r >>= 8)
 	    *out++ = r;
 	  R[i / 2] = r;
 	}
 
+      r = R[i];
       if (i == len - 2)
 	{
-	  /* Process last two elements, based on M0, M1. */
-	  uint32_t r = R[i] + R[i + 1] * step->M0;
 	  unsigned j;
+	  /* Process last two elements, based on M0, M1. */
+	  r += R[i + 1] * step->M0;
 	  for (j = 0; j < step->M1_count; j++, r >>= 8)
 	    *out++ = r;
 
 	  if (i == 0)
 	    break;
-
-	  R[i / 2] = r;
 	}
-      else
-	R[i / 2] = R[i];
+      R[i / 2] = r;
     }
 }
 
@@ -257,7 +256,7 @@ _sntrup_encode (const struct sntrup_encoding_step *step,
 int8_t
 _sntrup_mod_3 (int16_t x)
 {
-  uint16_t ux, a, r, p, mask;
+  uint16_t ux, a, r, p;
   /* x is either an canonical representative of Fq, |x| <= (q-1) / 2,
      or result of polynomial multiplication in which case |x| <= 2p
      which is a smaller range. */
@@ -271,8 +270,8 @@ _sntrup_mod_3 (int16_t x)
   /* Magic constant is ceil (2^16 / 3). */
   a = ((uint32_t) 21846 * ux) >> 16;
   p = 3 * a;
-  mask = - (uint16_t) (p > ux);
-  r = ux - p  + (mask & 3);
+  r = ux - p; /* Interpreted as two's complement, |r| < 3 */
+  r += (r >> 14);
   assert_maybe (r < 3);
   return (int8_t) r - 1;
 }
@@ -284,7 +283,7 @@ _sntrup_mod_3 (int16_t x)
 int16_t
 _sntrup761_mod_q (int32_t x)
 {
-  uint32_t ux, a, r, p, mask;
+  uint32_t ux;
   /* When called from Rq_mult_small, inputs are limited to w*(q-1) (or
      p*(q-1) for overweight inputs), but for Fq_recip and Rq_recip3
      inputs may be up to 2 q^2, which is a larger range. */
@@ -294,12 +293,7 @@ _sntrup761_mod_q (int32_t x)
      of q so we can use unsigned arithmetic. */
   ux = x + SNTRUP761_Q12 + 2*SNTRUP761_Q * SNTRUP761_Q;
   /* Magic constant is ceil (2^32 / q) */
-  a = ((uint64_t) 935519 * ux) >> 32;
-  p = SNTRUP761_Q * a;
-  mask = - (uint32_t) (p > ux);
-  r = ux - p  + (mask & SNTRUP761_Q);
-  assert_maybe (r < SNTRUP761_Q);
-  return (int32_t) r - SNTRUP761_Q12;
+  return (int32_t) uint32_16_mod (ux, SNTRUP761_Q, 935519) - SNTRUP761_Q12;
 }
 
 
