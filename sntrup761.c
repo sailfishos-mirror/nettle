@@ -41,8 +41,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #if WITH_EXTRA_ASSERTS
-# include <assert.h>
 # define assert_maybe(x) assert(x)
 #else
 # define assert_maybe(x) ((void)(x))
@@ -135,152 +135,81 @@ crypto_sort_uint32 (uint32_t *x, size_t n)
     }
 }
 
-/* from supercop-20201130/crypto_kem/sntrup761/ref/uint32.c */
-
-/*
-CPU division instruction typically takes time depending on x.
-This software is designed to take time independent of x.
-Time still varies depending on m; user must ensure that m is constant.
-Time also varies on CPUs where multiplication is variable-time.
-There could be more CPU issues.
-There could also be compiler issues.
-*/
-
-static void
-uint32_divmod_uint14 (uint32_t * q, uint16_t * r, uint32_t x, uint16_t m)
+static uint32_t
+uint32_16_divmod (uint16_t *rp, uint32_t u, uint16_t d, uint32_t dinv)
 {
-  uint32_t v = 0x80000000;
-  uint32_t qpart;
-  uint32_t mask;
-
-  v /= m;
-
-  /* caller guarantees m > 0 */
-  /* caller guarantees m < 16384 */
-  /* vm <= 2^31 <= vm+m-1 */
-  /* xvm <= 2^31 x <= xvm+x(m-1) */
-
-  *q = 0;
-
-  qpart = (x * (uint64_t) v) >> 31;
-  /* 2^31 qpart <= xv <= 2^31 qpart + 2^31-1 */
-  /* 2^31 qpart m <= xvm <= 2^31 qpart m + (2^31-1)m */
-  /* 2^31 qpart m <= 2^31 x <= 2^31 qpart m + (2^31-1)m + x(m-1) */
-  /* 0 <= 2^31 newx <= (2^31-1)m + x(m-1) */
-  /* 0 <= newx <= (1-1/2^31)m + x(m-1)/2^31 */
-  /* 0 <= newx <= (1-1/2^31)(2^14-1) + (2^32-1)((2^14-1)-1)/2^31 */
-
-  x -= qpart * m;
-  *q += qpart;
-  /* x <= 49146 */
-
-  qpart = (x * (uint64_t) v) >> 31;
-  /* 0 <= newx <= (1-1/2^31)m + x(m-1)/2^31 */
-  /* 0 <= newx <= m + 49146(2^14-1)/2^31 */
-  /* 0 <= newx <= m + 0.4 */
-  /* 0 <= newx <= m */
-
-  x -= qpart * m;
-  *q += qpart;
-  /* x <= m */
-
-  x -= m;
-  *q += 1;
-  mask = -(x >> 31);
-  x += mask & (uint32_t) m;
-  *q += mask;
-  /* x < m */
-
-  *r = x;
+  uint32_t q, r, p, mask;
+  q = ((uint64_t) dinv * u) >> 32;
+  p = q * d;
+  r = u - p; /* Interpreted as two's complement, |r| < d */
+  mask = - (uint32_t) (p > u);
+  *rp = r + (mask & d);
+  assert_maybe (*rp < d);
+  return q + mask;
 }
 
-
 static uint16_t
-uint32_mod_uint14 (uint32_t x, uint16_t m)
+uint32_16_mod (uint32_t u, uint16_t d, uint32_t dinv)
 {
-  uint32_t q;
-  uint16_t r;
-  uint32_divmod_uint14 (&q, &r, x, m);
+  uint32_t q, r, p;
+  q = ((uint64_t) dinv * u) >> 32;
+  p = q * d;
+  r = u - p; /* Interpreted as two's complement, |r| < d */
+  r += ((r >> 16) & d);
+  assert_maybe ((uint16_t) r < d);
   return r;
 }
 
-/* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.h */
-
-/* Decode(R,s,M,len) */
-/* assumes 0 < M[i] < 16384 */
-/* produces 0 <= R[i] < M[i] */
-
-/* from supercop-20201130/crypto_kem/sntrup761/ref/Decode.c */
-
 void
-_sntrup_decode (uint16_t * out, const uint8_t *S, uint32_t M0, uint32_t M1,
-		size_t len)
+_sntrup_decode (unsigned n, const struct sntrup_encoding_step *step,
+		uint16_t *R, const uint8_t *S /* Must point at *end* of input. */)
 {
-  if (len == 1)
+  step += --n;
+  assert (step->len == 2);
+  {
+    /* Decode first pair using M0, M1 */
+    uint32_t r;
+    unsigned j;
+
+    for (r = j = 0; j < step->M1_count; j++)
+      r = (r << 8) | *--S;
+
+    r = uint32_16_divmod (&R[0], r, step->M0, step->M0_inv);
+    R[1] = uint32_16_mod (r, step->M1, step->M1_inv);
+  }
+  while (n-- > 0)
     {
-      if (M1 == 1)
-	*out = 0;
-      else if (M1 <= 256)
-	*out = uint32_mod_uint14 (S[0], M1);
-      else
-	*out = uint32_mod_uint14 (S[0] + (((uint16_t) S[1]) << 8), M1);
-    }
-  if (len > 1)
-    {
-      uint16_t R2[(len + 1) / 2];
-      uint16_t bottomr[len / 2];
-      unsigned c0, c1;
       size_t i;
-      uint32_t M0n, M1n;
-      for (c0 = 0, M0n = M0 * M0; M0n >= 16384; M0n = (M0n + 255) >> 8)
-	c0++;
-      c1 = 0;
-
-      /* Process all but the last one or two elements. */
-      for (i = 0; i < len - 2; i += 2)
+      step--;
+      i = step->len;
+      if (step->len & 1)
 	{
-	  unsigned j;
-	  uint16_t r;
-	  for (j = r = 0; j < c0; j++)
-	    r |= ((uint16_t)(*S++)) << (8*j);
-	  bottomr[i / 2] = r;
+	  i--;
+	  /* Copy last element */
+	  R[i] = R[i / 2];
 	}
-      if (i == len - 2)
+      else
 	{
+	  /* Decode a pair using M0, M1 */
 	  uint32_t r;
-	  for (c1 = r = 0, M1n = M0 * M1; M1n >= 16384; M1n = (M1n + 255) >> 8, c1++)
-	    r |= ((uint16_t) (*S++)) << (8*c1);
-	  bottomr[i/2] = r;
+	  unsigned j;
+	  i-=2;
+	  for (j = 0, r = R[i/2]; j < step->M1_count; j++)
+	    r = (r << 8) | *--S;
+	  r = uint32_16_divmod (&R[i], r, step->M0, step->M0_inv);
+	  R[i+1] = uint32_16_mod (r, step->M1, step->M1_inv);
 	}
-      else
-	M1n = M1;
-
-      _sntrup_decode (R2, S, M0n, M1n, (len + 1) / 2);
-      /* Process all but the last one or two elements, using M0, M0. */
-      for (i = 0; i < len - 2; i += 2)
+      while (i > 0)
 	{
-	  uint32_t r = bottomr[i / 2];
-	  uint32_t r1;
-	  uint16_t r0;
-	  r += (uint32_t) R2[i / 2] << (8*c0);
-	  uint32_divmod_uint14 (&r1, &r0, r, M0);
-	  r1 = uint32_mod_uint14 (r1, M0);	/* only needed for invalid inputs */
-	  *out++ = r0;
-	  *out++ = r1;
+	  /* Decode a pair using M0, M0 */
+	  uint32_t r;
+	  unsigned j;
+	  i-=2;
+	  for (j = 0, r = R[i/2]; j < step->M0_count; j++)
+	    r = (r << 8) | *--S;
+	  r = uint32_16_divmod (&R[i], r, step->M0, step->M0_inv);
+	  R[i+1] = uint32_16_mod (r, step->M0, step->M0_inv);
 	}
-      if (i == len - 2)
-	{
-	  uint32_t r = bottomr[i / 2];
-	  uint32_t r1;
-	  uint16_t r0;
-	  r += (uint32_t) R2[i / 2] << (8*c1);
-	  uint32_divmod_uint14 (&r1, &r0, r, M0);
-	  r1 = uint32_mod_uint14 (r1, M1);	/* only needed for invalid inputs */
-	  *out++ = r0;
-	  *out++ = r1;
-	}
-      else
-	*out++ = R2[i / 2];
     }
 }
 
@@ -291,11 +220,11 @@ _sntrup_encode (const struct sntrup_encoding_step *step,
 {
   for (;; step++)
     {
-      size_t n = step->n;
+      size_t len = step->len;
       size_t i;
 
       /* Process all but the last one or two elements, based on M0, M0. */
-      for (i = 0; i < n - 2; i += 2)
+      for (i = 0; i < len - 2; i += 2)
 	{
 	  uint32_t r = R[i] + R[i + 1] * step->M0;
 	  unsigned j;
@@ -304,7 +233,7 @@ _sntrup_encode (const struct sntrup_encoding_step *step,
 	  R[i / 2] = r;
 	}
 
-      if (i == n - 2)
+      if (i == len - 2)
 	{
 	  /* Process last two elements, based on M0, M1. */
 	  uint32_t r = R[i] + R[i + 1] * step->M0;

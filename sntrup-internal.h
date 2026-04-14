@@ -114,7 +114,7 @@ _sntrup_urandom32 (void *random_ctx, nettle_random_func * random);
 
 struct sntrup_encoding_step
 {
-  size_t n;
+  size_t len;
   uint16_t M0;
   uint16_t M1;
   uint32_t M0_inv;
@@ -134,8 +134,8 @@ void
 _sntrup_encode (const struct sntrup_encoding_step *step, uint8_t *out, uint16_t * R);
 
 void
-_sntrup_decode (uint16_t * out, const uint8_t *S, uint32_t M0, uint32_t M1,
-		size_t len);
+_sntrup_decode (unsigned n, const struct sntrup_encoding_step *step,
+		uint16_t *R, const uint8_t *S /* Must point at *end* of input. */);
 
 int8_t
 _sntrup_mod_3 (int16_t x);
@@ -152,8 +152,11 @@ typedef int8_t sntrup761_R3_t[SNTRUP761_P];
 /* Coefficients mod q, represented as -(q-1)/2, ... , (q-1)/2. */
 typedef int16_t sntrup761_Rq_t[SNTRUP761_P];
 
-/* Octet size of an encoded R3 polynomial. */
+/* Octet size of an encoded R3 polynomial, 191. */
 #define SNTRUP761_R3_SIZE ((SNTRUP761_P+3)/4)
+
+/* Octet size of an encoded rounded polynomial, 1007. */
+#define SNTRUP761_ROUNDED_SIZE (SNTRUP761_CIPHER_SIZE - SNTRUP_HASH_SIZE)
 
 void
 _sntrup761_short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random);

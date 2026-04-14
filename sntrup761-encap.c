@@ -49,10 +49,10 @@ static void
 Rq_decode (sntrup761_Rq_t r, const uint8_t *s)
 {
   uint16_t R[SNTRUP761_P];
-  uint32_t M = SNTRUP761_Q;
   int i;
 
-  _sntrup_decode (R, s, M, M, SNTRUP761_P);
+  _sntrup_decode (SNTRUP761_ENCODING_STEPS,_sntrup761_encoding_Rq, R,
+		  s + SNTRUP761_PUBLIC_KEY_SIZE);
   for (i = 0; i < SNTRUP761_P; ++i)
     r[i] = ((int16_t) R[i]) - SNTRUP761_Q12;
 }

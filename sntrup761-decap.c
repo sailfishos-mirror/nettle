@@ -160,10 +160,10 @@ static void
 Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
 {
   uint16_t R[SNTRUP761_P];
-  uint32_t M = (SNTRUP761_Q + 2) / 3;
   int i;
 
-  _sntrup_decode (R, s, M, M, SNTRUP761_P);
+  _sntrup_decode (SNTRUP761_ENCODING_STEPS,_sntrup761_encoding_rounded, R,
+		  s + SNTRUP761_ROUNDED_SIZE);
   for (i = 0; i < SNTRUP761_P; ++i)
     r[i] = R[i] * 3 - SNTRUP761_Q12;
 }
