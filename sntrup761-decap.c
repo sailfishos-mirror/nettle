@@ -45,6 +45,8 @@
 #include "sntrup.h"
 #include "sntrup-internal.h"
 
+#include "memops.h"
+
 /* 0 if Weightw_is(r), else -1 */
 static int
 Weightw_mask (sntrup761_R3_t r)
@@ -174,17 +176,6 @@ ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
     r[i] = e[i] & ~mask;
 }
 
-static int
-Ciphertexts_diff_mask (const uint8_t *c, const uint8_t *c2)
-{
-  uint16_t differentbits = 0;
-  int len = SNTRUP761_CIPHER_SIZE;
-
-  while (len-- > 0)
-    differentbits |= (*c++) ^ (*c2++);
-  return (1 & ((differentbits - 1) >> 8)) - 1;
-}
-
 /* k = Decap(c,sk) */
 void
 sntrup761_decap (uint8_t *k, const uint8_t *c, const uint8_t *sk)
@@ -200,7 +191,7 @@ sntrup761_decap (uint8_t *k, const uint8_t *c, const uint8_t *sk)
 
   ZDecrypt (r, c, sk);
   _sntrup761_encap_internal (cnew, r_enc, r, pk, cache);
-  mask = Ciphertexts_diff_mask (c, cnew);
+  mask = memeql_sec(c, cnew, sizeof (cnew)) - 1;
   for (i = 0; i < SNTRUP761_R3_SIZE; ++i)
     r_enc[i] ^= mask & (r_enc[i] ^ rho[i]);
   _sntrup_hash_session (k, 1 + mask, r_enc, c);
