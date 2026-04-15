@@ -189,15 +189,16 @@ Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
   int32_t f0, g0;
   int16_t scale;
 
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    v[i] = 0;
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    r[i] = 0;
-  r[0] = Fq_recip (3);
-  for (i = 0; i < SNTRUP761_P; ++i)
-    f[i] = 0;
+  v[0] = 0;
+  r[0] = -1530; /* 3^-1 (mod q) */
+  for (i = 1; i < SNTRUP761_P + 1; ++i)
+    v[i] = r[i] = 0;
+
   f[0] = 1;
+  for (i = 1; i < SNTRUP761_P - 1; ++i)
+    f[i] = 0;
   f[SNTRUP761_P - 1] = f[SNTRUP761_P] = -1;
+
   for (i = 0; i < SNTRUP761_P; ++i)
     g[SNTRUP761_P - 1 - i] = in[i];
   g[SNTRUP761_P] = 0;
@@ -226,14 +227,12 @@ Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
 
       f0 = f[0];
       g0 = g[0];
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	g[i] = _sntrup761_mod_q (f0 * g[i] - g0 * f[i]);
+      for (i = 0; i < SNTRUP761_P; ++i)
+	g[i] = _sntrup761_mod_q (f0 * g[i+1] - g0 * f[i+1]);
+      g[SNTRUP761_P] = 0;
+
       for (i = 0; i < SNTRUP761_P + 1; ++i)
 	r[i] = _sntrup761_mod_q (f0 * r[i] - g0 * v[i]);
-
-      for (i = 0; i < SNTRUP761_P; ++i)
-	g[i] = g[i + 1];
-      g[SNTRUP761_P] = 0;
     }
 
   scale = Fq_recip (f[0]);
