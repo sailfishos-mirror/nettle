@@ -284,9 +284,11 @@ int16_t
 _sntrup761_mod_q (int32_t x)
 {
   uint32_t ux;
-  /* When called from Rq_mult_small, inputs are limited to w*(q-1) (or
-     p*(q-1) for overweight inputs), but for Fq_recip and Rq_recip3
-     inputs may be up to 2 q^2, which is a larger range. */
+  /* When called from Rq_mult_small, inputs are ideally limited to
+     w*(q-1), but to allow overweight inputs and small coeffients
+     premultiplied by 3, we must allow inputs up to 3*p*(q-1). When
+     called from Fq_recip and Rq_recip3 inputs may be up to 2 q^2,
+     which is a larger range. */
   assert_maybe (x < 2*SNTRUP761_Q * SNTRUP761_Q);
   assert_maybe (x > -2*SNTRUP761_Q * SNTRUP761_Q);
   /* We want ((x + (q-1)/2) mod q) - (q-1)/2, but also add a multiple
@@ -300,7 +302,7 @@ _sntrup761_mod_q (int32_t x)
 /* ----- polynomials mod q */
 
 /* h = f*g in the ring Rq. Tolerates g coeffients outside of the proper
-   range, up to absolute value 6. */
+   range, up to absolute value 3. */
 void
 _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g)
 {
