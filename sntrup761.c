@@ -42,12 +42,6 @@
 #endif
 
 #include <assert.h>
-#if WITH_EXTRA_ASSERTS
-# define assert_maybe(x) assert(x)
-#else
-# define assert_maybe(x) ((void)(x))
-#endif
-
 #include <string.h>
 
 #include "sntrup.h"

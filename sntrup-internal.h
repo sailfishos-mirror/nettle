@@ -74,6 +74,12 @@
 
 #define SNTRUP_HASH_SIZE 32
 
+#if WITH_EXTRA_ASSERTS
+# define assert_maybe(x) assert(x)
+#else
+# define assert_maybe(x) ((void)(x))
+#endif
+
 /* Return -1 if high bit set, otherwise zero. */
 static inline int
 uint16_highbit_mask (uint16_t x)

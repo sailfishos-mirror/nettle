@@ -42,6 +42,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include "sntrup.h"
 #include "sntrup-internal.h"
 
@@ -54,18 +56,46 @@ Small_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
     out[i] = (((_sntrup_urandom32 (random_ctx, random) & 0x3fffffff) * 3) >> 30) - 1;
 }
 
-static int16_t
-Fq_recip (int16_t a1)
+/* Returns non-canonical representation, 0 <= r < 2q */
+static uint16_t
+mod_q_appr (uint32_t u)
 {
-  int i = 1;
-  int16_t ai = a1;
+  uint32_t a, r, p;
+  /* Magic constant is ceil (2^32 / q) */
+  a = ((uint64_t) 935519 * u) >> 32;
+  p = a * SNTRUP761_Q;
+  r = SNTRUP761_Q + u - p;
+  assert_maybe (r < 2*SNTRUP761_Q);
+  return r;
+}
 
-  while (i < SNTRUP761_Q - 2)
-    {
-      ai = _sntrup761_mod_q (a1 * (int32_t) ai);
-      i += 1;
-    }
-  return ai;
+static int16_t
+Fq_recip (int16_t a)
+{
+  int16_t x;
+  uint16_t ua, ux;
+  ua = a + SNTRUP761_Q;
+  ux = mod_q_appr ((uint32_t) ua * ua); /* a^2 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^4 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^8 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^16 */
+  ux = mod_q_appr ((uint32_t) ux * ua); /* a^17 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^34 */
+  ux = mod_q_appr ((uint32_t) ux * ua); /* a^35 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^70 */
+  ux = mod_q_appr ((uint32_t) ux * ua); /* a^71 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^142 */
+  ux = mod_q_appr ((uint32_t) ux * ua); /* a^143 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^286 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^572 */
+  ux = mod_q_appr ((uint32_t) ux * ua); /* a^573 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^1146 */
+  ux = mod_q_appr ((uint32_t) ux * ua); /* a^1147 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^2294 */
+  ux = mod_q_appr ((uint32_t) ux * ux); /* a^4588 */
+  x = _sntrup761_mod_q ((int32_t) ux * a); /* a^4589 = a^(q-2) */
+  assert_maybe (_sntrup761_mod_q ((int32_t) x * a) == 1);
+  return x;
 }
 
 /* returns 0 if recip succeeded; else -1 */
