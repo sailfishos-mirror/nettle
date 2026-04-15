@@ -109,15 +109,16 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
   int i, loop, delta;
   int sign, swap, t;
 
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    v[i] = 0;
-  for (i = 0; i < SNTRUP761_P + 1; ++i)
-    r[i] = 0;
+  v[0] = 0;
   r[0] = 1;
-  for (i = 0; i < SNTRUP761_P; ++i)
-    f[i] = 0;
+  for (i = 1; i < SNTRUP761_P + 1; ++i)
+    v[i] = r[i] = 0;
+
   f[0] = 1;
+  for (i = 1; i < SNTRUP761_P - 1; ++i)
+    f[i] = 0;
   f[SNTRUP761_P - 1] = f[SNTRUP761_P] = -1;
+
   for (i = 0; i < SNTRUP761_P; ++i)
     g[SNTRUP761_P - 1 - i] = in[i];
   g[SNTRUP761_P] = 0;
@@ -162,14 +163,12 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 	  r[i] ^= t;
 	}
 
-      for (i = 0; i < SNTRUP761_P + 1; ++i)
-	g[i] += sign * f[i];
+      for (i = 0; i < SNTRUP761_P; ++i)
+	g[i] = g[i+1] + sign * f[i+1];
+      g[SNTRUP761_P] = 0;
+
       for (i = 0; i < SNTRUP761_P + 1; ++i)
 	r[i] += sign * v[i];
-
-      for (i = 0; i < SNTRUP761_P; ++i)
-	g[i] = g[i + 1];
-      g[SNTRUP761_P] = 0;
     }
 
   sign = _sntrup_mod_3 (f[0]);
