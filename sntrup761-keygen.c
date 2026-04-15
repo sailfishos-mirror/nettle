@@ -102,6 +102,9 @@ Fq_recip (int16_t a)
 static int
 R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 {
+  /* Working polynomials have non-canonical coefficients. After 8
+     iterations, coefficients may grow up to size fibonacci (11) ==
+     89, which still fit in int8_t. */
   int8_t f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
   int i, loop, delta;
   int sign, swap, t;
@@ -127,6 +130,23 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 	v[i] = v[i - 1];
       v[0] = 0;
 
+      /* Always canonicalize the values controlling the iteration
+	 update. */
+      g[0] = _sntrup_mod_3 (g[0]);
+      f[0] = _sntrup_mod_3 (f[0]);
+
+      if (loop && !(loop & 7))
+	{
+	  /* Re-canonicalize everything. */
+	  r[0] = _sntrup_mod_3 (r[0]);
+	  for (i = 1; i < SNTRUP761_P + 1; ++i)
+	    {
+	      g[i] = _sntrup_mod_3 (g[i]);
+	      f[i] = _sntrup_mod_3 (f[i]);
+	      v[i] = _sntrup_mod_3 (v[i]);
+	      r[i] = _sntrup_mod_3 (r[i]);
+	    }
+	}
       sign = -g[0] * f[0];
       swap = uint16_highbit_mask (-delta) & uint16_nonzero_mask (g[0]);
       delta ^= swap & (delta ^ -delta);
@@ -143,18 +163,18 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 	}
 
       for (i = 0; i < SNTRUP761_P + 1; ++i)
-	g[i] = _sntrup_mod_3 (g[i] + sign * f[i]);
+	g[i] += sign * f[i];
       for (i = 0; i < SNTRUP761_P + 1; ++i)
-	r[i] = _sntrup_mod_3 (r[i] + sign * v[i]);
+	r[i] += sign * v[i];
 
       for (i = 0; i < SNTRUP761_P; ++i)
 	g[i] = g[i + 1];
       g[SNTRUP761_P] = 0;
     }
 
-  sign = f[0];
+  sign = _sntrup_mod_3 (f[0]);
   for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = sign * v[SNTRUP761_P - 1 - i];
+    out[i] = _sntrup_mod_3 (sign * v[SNTRUP761_P - 1 - i]);
 
   return uint16_nonzero_mask (delta);
 }
