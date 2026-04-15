@@ -151,7 +151,6 @@ ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
 {
   sntrup761_R3_t f, ginv;
   sntrup761_Rq_t c, cf3;
-  sntrup761_R3_t e;
   int mask;
   int i;
 
@@ -166,14 +165,14 @@ ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
     f[i] *= 3;
 
   _sntrup761_Rq_mult_small (cf3, c, f);
-  R3_fromRq (e, cf3);
-  R3_mult (e, e, ginv);
+  R3_fromRq (r, cf3);
+  R3_mult (r, r, ginv);
 
-  mask = Weightw_mask (e);	/* 0 if weight SNTRUP761_W, else -1 */
+  mask = Weightw_mask (r);	/* 0 if weight SNTRUP761_W, else -1 */
   for (i = 0; i < SNTRUP761_W; ++i)
-    r[i] = ((e[i] ^ 1) & ~mask) ^ 1;
+    r[i] = ((r[i] ^ 1) & ~mask) ^ 1;
   for (i = SNTRUP761_W; i < SNTRUP761_P; ++i)
-    r[i] = e[i] & ~mask;
+    r[i] &= ~mask;
 }
 
 /* k = Decap(c,sk) */
