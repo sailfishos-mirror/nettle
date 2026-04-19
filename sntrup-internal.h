@@ -41,11 +41,7 @@
 #ifndef NETTLE_SNTRUP_INTERNAL_H
 #define NETTLE_SNTRUP_INTERNAL_H
 
-#include "sha2.h"
-
 /* Name mangling */
-#define _sntrup_hash_init _nettle_sntrup_hash_init
-#define _sntrup_hash_digest _nettle_sntrup_hash_digest
 #define _sntrup_hash_prefix _nettle_sntrup_hash_prefix
 #define _sntrup_hash_session _nettle_sntrup_hash_session
 #define _sntrup_hash_confirm _nettle_sntrup_hash_confirm
@@ -93,15 +89,6 @@ uint16_nonzero_mask (uint16_t x)
 {
   return uint16_highbit_mask (x | -x);
 }
-
-/* e.g., b = 0 means out = Hash0(in) */
-void
-_sntrup_hash_init (struct sha512_ctx *ctx, uint8_t b);
-
-#define _sntrup_hash_update sha512_update
-
-void
-_sntrup_hash_digest (struct sha512_ctx *ctx, uint8_t *digest);
 
 void
 _sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen);

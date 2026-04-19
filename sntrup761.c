@@ -46,6 +46,7 @@
 
 #include "sntrup.h"
 #include "sntrup-internal.h"
+#include "sha2.h"
 
 #include "sntrup761-encoding.h"
 
@@ -351,15 +352,18 @@ Short_fromlist (sntrup761_R3_t out, const uint32_t *in)
 
 /* ----- underlying hash function */
 
-void
-_sntrup_hash_init (struct sha512_ctx *ctx, uint8_t b)
+/* e.g., b = 0 means out = Hash0(in) */
+static void
+hash_init (struct sha512_ctx *ctx, uint8_t b)
 {
   sha512_init (ctx);
   sha512_update (ctx, 1, &b);
 }
 
-void
-_sntrup_hash_digest (struct sha512_ctx *ctx, uint8_t *digest)
+#define hash_update sha512_update
+
+static void
+hash_digest (struct sha512_ctx *ctx, uint8_t *digest)
 {
   uint8_t h[SHA512_DIGEST_SIZE];
   sha512_digest (ctx, h);
@@ -370,9 +374,9 @@ void
 _sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen)
 {
   struct sha512_ctx ctx;
-  _sntrup_hash_init (&ctx, b);
-  _sntrup_hash_update (&ctx, inlen, in);
-  _sntrup_hash_digest (&ctx, out);
+  hash_init (&ctx, b);
+  hash_update (&ctx, inlen, in);
+  hash_digest (&ctx, out);
 }
 
 /* ----- higher-level randomness */
@@ -434,10 +438,10 @@ _sntrup_hash_confirm (uint8_t *h, const uint8_t *r,
   uint8_t x[SNTRUP_HASH_SIZE];
 
   _sntrup_hash_prefix (x, 3, r, SNTRUP761_R3_SIZE);
-  _sntrup_hash_init (&ctx, 2);
-  _sntrup_hash_update (&ctx, sizeof (x), x);
-  _sntrup_hash_update (&ctx, SNTRUP_HASH_SIZE, cache);
-  _sntrup_hash_digest (&ctx, h);
+  hash_init (&ctx, 2);
+  hash_update (&ctx, sizeof (x), x);
+  hash_update (&ctx, SNTRUP_HASH_SIZE, cache);
+  hash_digest (&ctx, h);
 }
 
 /* ----- session-key hash */
@@ -451,8 +455,8 @@ _sntrup_hash_session (uint8_t *k, uint8_t b, const uint8_t *y,
   uint8_t x[SNTRUP_HASH_SIZE];
 
   _sntrup_hash_prefix (x, 3, y, SNTRUP761_R3_SIZE);
-  _sntrup_hash_init (&ctx, b);
-  _sntrup_hash_update (&ctx, sizeof (x), x);
-  _sntrup_hash_update (&ctx, SNTRUP761_CIPHER_SIZE, z);
-  _sntrup_hash_digest (&ctx, k);
+  hash_init (&ctx, b);
+  hash_update (&ctx, sizeof (x), x);
+  hash_update (&ctx, SNTRUP761_CIPHER_SIZE, z);
+  hash_digest (&ctx, k);
 }
