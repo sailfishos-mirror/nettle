@@ -47,14 +47,14 @@
 
 #include "memops.h"
 
-/* 0 if Weightw_is(r), else -1 */
+/* 0 if weight(r) == w, else -1 */
 static int
 Weightw_mask (sntrup761_R3_t r)
 {
   int weight = 0;
   int i;
 
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     weight += r[i] & 1;
   return uint16_nonzero_mask (weight - SNTRUP761_W);
 }
@@ -64,29 +64,28 @@ static void
 R3_fromRq (sntrup761_R3_t out, const sntrup761_Rq_t r)
 {
   int i;
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     out[i] = _sntrup_mod_3 (r[i]);
 }
 
-/* h = f*g in the ring R3. Allows non-canonical input, since decoding
-   can produce coefficients with the value 2. */
+/* h = f*g in the ring R3. */
 static void
 R3_mult (sntrup761_R3_t h, const sntrup761_R3_t f, const sntrup761_R3_t g)
 {
   int16_t fg[SNTRUP761_P + SNTRUP761_P - 1];
   int i, j;
 
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     {
       int16_t result;
-      for (result = 0, j = 0; j <= i; ++j)
+      for (result = 0, j = 0; j <= i; j++)
 	result += f[j] * g[i - j];
       fg[i] = result;
     }
-  for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; ++i)
+  for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; i++)
     {
       int16_t result;
-      for (result = 0, j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
+      for (result = 0, j = i - SNTRUP761_P + 1; j < SNTRUP761_P; j++)
 	result += f[j] * g[i - j];
       fg[i] = result;
     }
@@ -97,8 +96,8 @@ R3_mult (sntrup761_R3_t h, const sntrup761_R3_t f, const sntrup761_R3_t g)
       fg[i - SNTRUP761_P + 1] += fg[i];
     }
 
-  for (i = 0; i < SNTRUP761_P; ++i)
-    h[i] = _sntrup_mod_3(fg[i]);
+  for (i = 0; i < SNTRUP761_P; i++)
+    h[i] = _sntrup_mod_3 (fg[i]);
 }
 
 /* Decodes a polynomial with coefficients supposedly all being in {-1,
@@ -110,7 +109,7 @@ Small_decode (sntrup761_R3_t f, const uint8_t *s)
   int8_t *p;
   int i;
 
-  for (i = 0, p = f; i < SNTRUP761_P / 4; ++i)
+  for (i = 0, p = f; i < SNTRUP761_P / 4; i++)
     {
       uint8_t x = *s++;
       /* All bit pairs should be one of 00, 01, 10. If invalid value
@@ -139,9 +138,9 @@ Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
   uint16_t R[SNTRUP761_P];
   int i;
 
-  _sntrup_decode (SNTRUP761_ENCODING_STEPS,_sntrup761_encoding_rounded, R,
+  _sntrup_decode (SNTRUP761_ENCODING_STEPS, _sntrup761_encoding_rounded, R,
 		  s + SNTRUP761_ROUNDED_SIZE);
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     r[i] = R[i] * 3 - SNTRUP761_Q12;
 }
 
@@ -150,13 +149,12 @@ static void
 ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
 {
   sntrup761_R3_t f, ginv;
-  sntrup761_Rq_t c, cf3;
+  sntrup761_Rq_t c;
   int mask;
   int i;
 
   Small_decode (f, sk);
-  sk += SNTRUP761_R3_SIZE;
-  Small_decode (ginv, sk);
+  Small_decode (ginv, sk + SNTRUP761_R3_SIZE);
   Rounded_decode (c, c_enc);
 
   /* Premultiply by 3; the result is interpreted as a polynomial over
@@ -164,14 +162,14 @@ ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
   for (i = 0; i < SNTRUP761_P; i++)
     f[i] *= 3;
 
-  _sntrup761_Rq_mult_small (cf3, c, f);
-  R3_fromRq (r, cf3);
+  _sntrup761_Rq_mult_small (c, c, f);
+  R3_fromRq (r, c);
   R3_mult (r, r, ginv);
 
   mask = Weightw_mask (r);	/* 0 if weight SNTRUP761_W, else -1 */
-  for (i = 0; i < SNTRUP761_W; ++i)
+  for (i = 0; i < SNTRUP761_W; i++)
     r[i] = ((r[i] ^ 1) & ~mask) ^ 1;
-  for (i = SNTRUP761_W; i < SNTRUP761_P; ++i)
+  for (; i < SNTRUP761_P; i++)
     r[i] &= ~mask;
 }
 
@@ -191,7 +189,7 @@ sntrup761_decap (uint8_t *k, const uint8_t *c, const uint8_t *sk)
   ZDecrypt (r, c, sk);
   _sntrup761_encap_internal (cnew, r_enc, r, pk, cache);
   mask = memeql_sec(c, cnew, sizeof (cnew)) - 1;
-  for (i = 0; i < SNTRUP761_R3_SIZE; ++i)
+  for (i = 0; i < SNTRUP761_R3_SIZE; i++)
     r_enc[i] ^= mask & (r_enc[i] ^ rho[i]);
   _sntrup_hash_session (k, 1 + mask, r_enc, c);
 }
