@@ -53,25 +53,24 @@ Rq_decode (sntrup761_Rq_t r, const uint8_t *s)
 
   _sntrup_decode (SNTRUP761_ENCODING_STEPS,_sntrup761_encoding_Rq, R,
 		  s + SNTRUP761_PUBLIC_KEY_SIZE);
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     r[i] = ((int16_t) R[i]) - SNTRUP761_Q12;
 }
 
 static uint16_t
 div_3 (uint16_t x)
 {
-  uint16_t a, p, mask;
+  uint16_t q, r;
   /* Magic constant is ceil (2^16 / 3). */
-  a = ((uint32_t) 21846 * x) >> 16;
-  p = 3 * a;
-  mask = - (uint16_t) (p > x);
-  return a + mask;
+  q = ((uint32_t) 21846 * x) >> 16;
+  r = x - 3 * q;
+  return q - (r >> 15);
 }
 
 /* Short-circuit rounding followed by exact division by 3. Rounding
    means computing
 
-     u = x + (q-1)/2 + 1 (note (q-1)/2 =0 (mod 3))
+     u = x + (q-1)/2 + 1 (note (q-1)/2 = 0 (mod 3))
      a = floor (u/3)
      r = u - 3*a - 1
      x' = x - r
@@ -89,12 +88,12 @@ Round_and_encode (uint8_t *s, const sntrup761_Rq_t r)
   uint16_t R[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     R[i] = div_3 (r[i] + SNTRUP761_Q12 + 1);
   _sntrup_encode (_sntrup761_encoding_rounded, s, R);
 }
 
-/* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
+/* cache is Hash4(pk) */
 void
 _sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
 			   const uint8_t *pk, const uint8_t *cache)
@@ -104,10 +103,9 @@ _sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
   Rq_decode (t, pk);
   _sntrup761_Rq_mult_small (t, t, r);
   Round_and_encode (c, t);
-  _sntrup_hash_confirm (c + SNTRUP761_CIPHER_SIZE - SNTRUP_HASH_SIZE, r_enc, cache);
+  _sntrup_hash_confirm (c + SNTRUP761_ROUNDED_SIZE, r_enc, cache);
 }
 
-/* c,k = Encap(pk) */
 void
 sntrup761_encap (uint8_t *c, uint8_t *k, const uint8_t *pk,
 		 void *random_ctx, nettle_random_func * random)
