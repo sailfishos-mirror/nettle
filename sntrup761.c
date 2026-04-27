@@ -46,9 +46,10 @@
 
 #include "sntrup.h"
 #include "sntrup-internal.h"
-#include "sha2.h"
-
 #include "sntrup761-encoding.h"
+
+#include "bswap-internal.h"
+#include "sha2.h"
 
 #define uint32_MINMAX(a,b) \
 do { \
@@ -76,11 +77,11 @@ crypto_sort_uint32 (uint32_t *x, size_t n)
       i = 0;
       while (i + 2 * p <= n)
 	{
-	  for (j = i; j < i + p; ++j)
+	  for (j = i; j < i + p; j++)
 	    uint32_MINMAX (x[j], x[j + p]);
 	  i += 2 * p;
 	}
-      for (j = i; j < n - p; ++j)
+      for (j = i; j < n - p; j++)
 	uint32_MINMAX (x[j], x[j + p]);
 
       i = 0;
@@ -96,7 +97,7 @@ crypto_sort_uint32 (uint32_t *x, size_t n)
 		for (r = q; r > p; r >>= 1)
 		  uint32_MINMAX (a, x[j + r]);
 		x[j + p] = a;
-		++j;
+		j++;
 		if (j == i + p)
 		  {
 		    i += 2 * p;
@@ -105,7 +106,7 @@ crypto_sort_uint32 (uint32_t *x, size_t n)
 	      }
 	  while (i + p <= n - q)
 	    {
-	      for (j = i; j < i + p; ++j)
+	      for (j = i; j < i + p; j++)
 		{
 		  uint32_t a = x[j + p];
 		  for (r = q; r > p; r >>= 1)
@@ -122,7 +123,7 @@ crypto_sort_uint32 (uint32_t *x, size_t n)
 	      for (r = q; r > p; r >>= 1)
 		uint32_MINMAX (a, x[j + r]);
 	      x[j + p] = a;
-	      ++j;
+	      j++;
 	    }
 
 	done:;
@@ -177,7 +178,7 @@ _sntrup_decode (unsigned n, const struct sntrup_encoding_step *step,
       size_t i;
       step--;
       i = step->len;
-      if (step->len & 1)
+      if (i & 1)
 	{
 	  i--;
 	  /* Copy last element */
@@ -188,7 +189,7 @@ _sntrup_decode (unsigned n, const struct sntrup_encoding_step *step,
 	  /* Decode a pair using M0, M1 */
 	  uint32_t r;
 	  unsigned j;
-	  i-=2;
+	  i -= 2;
 	  for (j = 0, r = R[i/2]; j < step->M1_count; j++)
 	    r = (r << 8) | *--S;
 	  r = uint32_16_divmod (&R[i], r, step->M0, step->M0_inv);
@@ -199,7 +200,7 @@ _sntrup_decode (unsigned n, const struct sntrup_encoding_step *step,
 	  /* Decode a pair using M0, M0 */
 	  uint32_t r;
 	  unsigned j;
-	  i-=2;
+	  i -= 2;
 	  for (j = 0, r = R[i/2]; j < step->M0_count; j++)
 	    r = (r << 8) | *--S;
 	  r = uint32_16_divmod (&R[i], r, step->M0, step->M0_inv);
@@ -211,7 +212,7 @@ _sntrup_decode (unsigned n, const struct sntrup_encoding_step *step,
 /* Clobbers R during encoding. */
 void
 _sntrup_encode (const struct sntrup_encoding_step *step,
-		uint8_t *out, uint16_t * R)
+		uint8_t *out, uint16_t *R)
 {
   for (;; step++)
     {
@@ -247,11 +248,11 @@ _sntrup_encode (const struct sntrup_encoding_step *step,
 
 /* ----- arithmetic mod 3 */
 
-/* F3 is always represented as -1,0,1 */
+/* Reduce input to the canonical range -1,0,1 */
 int8_t
 _sntrup_mod_3 (int16_t x)
 {
-  uint16_t ux, a, r, p;
+  uint16_t ux, a, r;
   /* x is either an canonical representative of Fq, |x| <= (q-1) / 2,
      or result of polynomial multiplication in which case |x| <= 2p
      which is a smaller range. */
@@ -264,17 +265,15 @@ _sntrup_mod_3 (int16_t x)
   ux = x + 1 + SNTRUP761_Q12;
   /* Magic constant is ceil (2^16 / 3). */
   a = ((uint32_t) 21846 * ux) >> 16;
-  p = 3 * a;
-  r = ux - p; /* Interpreted as two's complement, |r| < 3 */
+  r = ux - 3*a; /* Interpreted as two's complement, |r| < 3 */
   r += (r >> 14);
   assert_maybe (r < 3);
   return (int8_t) r - 1;
 }
+
 /* ----- arithmetic mod q */
 
-/* always represented as -(q-1)/2...(q-1)/2 */
-/* so ZZ_fromFq is a no-op */
-
+/* Reduce input to the canonical range -(q-1)/2...(q-1)/2 */
 int16_t
 _sntrup761_mod_q (int32_t x)
 {
@@ -304,17 +303,17 @@ _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup
   int32_t fg[SNTRUP761_P + SNTRUP761_P - 1];
   int i, j;
 
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     {
       int32_t result;
-      for (result = 0, j = 0; j <= i; ++j)
+      for (result = 0, j = 0; j <= i; j++)
 	result +=  f[j] * (int32_t) g[i - j];
       fg[i] = result;
     }
-  for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; ++i)
+  for (i = SNTRUP761_P; i < SNTRUP761_P + SNTRUP761_P - 1; i++)
     {
       int32_t result;
-      for (result = 0, j = i - SNTRUP761_P + 1; j < SNTRUP761_P; ++j)
+      for (result = 0, j = i - SNTRUP761_P + 1; j < SNTRUP761_P; j++)
 	result += f[j] * (int32_t) g[i - j];
       fg[i] = result;
     }
@@ -325,29 +324,10 @@ _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup
       fg[i - SNTRUP761_P + 1] += fg[i];
     }
 
-  for (i = 0; i < SNTRUP761_P; ++i)
+  for (i = 0; i < SNTRUP761_P; i++)
     /* Coeffients to be reduced are bounded by
-       2*6*p*(q-1)/2 = 20957940 < q*q. */
+       2*3*p*(q-1)/2 = 10478970 < q*q. */
     h[i] = _sntrup761_mod_q (fg[i]);
-}
-
-/* ----- rounded polynomials mod q */
-
-/* ----- sorting to generate short polynomial */
-
-static void
-Short_fromlist (sntrup761_R3_t out, const uint32_t *in)
-{
-  uint32_t L[SNTRUP761_P];
-  int i;
-
-  for (i = 0; i < SNTRUP761_W; ++i)
-    L[i] = in[i] & (uint32_t) - 2;
-  for (i = SNTRUP761_W; i < SNTRUP761_P; ++i)
-    L[i] = (in[i] & (uint32_t) - 3) | 1;
-  crypto_sort_uint32 (L, SNTRUP761_P);
-  for (i = 0; i < SNTRUP761_P; ++i)
-    out[i] = (L[i] & 3) - 1;
 }
 
 /* ----- underlying hash function */
@@ -379,45 +359,50 @@ _sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen)
   hash_digest (&ctx, out);
 }
 
-/* ----- higher-level randomness */
-
+/* ----- randomness */
 uint32_t
 _sntrup_urandom32 (void *random_ctx, nettle_random_func * random)
 {
-  uint8_t c[4];
-  uint32_t out[4];
-
-  random (random_ctx, 4, c);
-  out[0] = (uint32_t) c[0];
-  out[1] = ((uint32_t) c[1]) << 8;
-  out[2] = ((uint32_t) c[2]) << 16;
-  out[3] = ((uint32_t) c[3]) << 24;
-  return out[0] + out[1] + out[2] + out[3];
+  union {
+    uint8_t c[4];
+    uint32_t i;
+  } u;
+  random (random_ctx, 4, u.c);
+  return bswap32_if_be (u.i);
 }
 
+/* ----- sorting to generate short polynomial */
 void
 _sntrup761_short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
 {
   uint32_t L[SNTRUP761_P];
   int i;
 
-  for (i = 0; i < SNTRUP761_P; ++i)
-    L[i] = _sntrup_urandom32 (random_ctx, random);
-  Short_fromlist (out, L);
+  for (i = 0; i < SNTRUP761_W; i++)
+    /* Low two bits set randomly to 00 or 10. */
+    L[i] = _sntrup_urandom32 (random_ctx, random) & ~(uint32_t) 1;
+  for (; i < SNTRUP761_P; i++)
+    /* Low two bits set to 01. */
+    L[i] = ((_sntrup_urandom32 (random_ctx, random) & ~(uint32_t) 3)) | 1;
+
+  crypto_sort_uint32 (L, SNTRUP761_P);
+
+  for (i = 0; i < SNTRUP761_P; i++)
+    {
+      assert_maybe (i == 0 || L[i-1] <= L[i]);
+      out[i] = (L[i] & 3) - 1;
+    }
 }
 
-
 /* ----- encoding small polynomials (including short polynomials) */
-
-/* these are the only functions that rely on SNTRUP761_P mod 4 = 1 */
-
 void
 _sntrup761_small_encode (uint8_t *s, const sntrup761_R3_t f)
 {
   const int8_t *p;
   int i;
 
-  for (i = 0, p = f; i < SNTRUP761_P / 4; ++i)
+  /* Relies on SNTRUP761_P mod 4 = 1 */
+  for (i = 0, p = f; i < SNTRUP761_P / 4; i++)
     {
       int8_t x;
       x = *p++ + 1;
@@ -428,7 +413,6 @@ _sntrup761_small_encode (uint8_t *s, const sntrup761_R3_t f)
     }
   *s = *p + 1;
 }
-
 
 void
 _sntrup_hash_confirm (uint8_t *h, const uint8_t *r,

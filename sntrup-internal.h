@@ -160,7 +160,6 @@ _sntrup761_small_encode (uint8_t *s, const sntrup761_R3_t f);
 void
 _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g);
 
-/* c,r_enc = Hide(r,pk,cache); cache is Hash4(pk) */
 void
 _sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
 			   const uint8_t *pk, const uint8_t *cache);
