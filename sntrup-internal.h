@@ -163,7 +163,8 @@ void
 _sntrup761_Rq_mult_small (sntrup761_Rq_t h, const sntrup761_Rq_t f, const sntrup761_R3_t g);
 
 void
-_sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
-			   const uint8_t *pk, const uint8_t *cache);
+_sntrup761_encap_internal (const uint8_t *pk, const uint8_t *cache,
+			   uint8_t *r_enc, uint8_t *c,
+			   const sntrup761_R3_t r);
 
 #endif /* NETTLE_SNTRUP_INTERNAL_H */

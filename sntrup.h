@@ -63,11 +63,11 @@ sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
 			    nettle_random_func *random);
 
 void
-sntrup761_encap (uint8_t *c, uint8_t *k, const uint8_t *pk,
+sntrup761_encap (const uint8_t *pk, uint8_t *k, uint8_t *c,
 		 void *random_ctx, nettle_random_func *random);
 
 void
-sntrup761_decap (uint8_t *k, const uint8_t *c, const uint8_t *sk);
+sntrup761_decap (const uint8_t *sk, uint8_t *k, const uint8_t *c);
 
 #ifdef __cplusplus
 }

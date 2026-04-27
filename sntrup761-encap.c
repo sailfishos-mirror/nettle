@@ -95,8 +95,9 @@ Round_and_encode (uint8_t *s, const sntrup761_Rq_t r)
 
 /* cache is Hash4(pk) */
 void
-_sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
-			   const uint8_t *pk, const uint8_t *cache)
+_sntrup761_encap_internal (const uint8_t *pk, const uint8_t *cache,
+			   uint8_t *r_enc, uint8_t *c,
+			   const sntrup761_R3_t r)
 {
   sntrup761_Rq_t t;
   _sntrup761_small_encode (r_enc, r);
@@ -107,7 +108,7 @@ _sntrup761_encap_internal (uint8_t *c, uint8_t *r_enc, const sntrup761_R3_t r,
 }
 
 void
-sntrup761_encap (uint8_t *c, uint8_t *k, const uint8_t *pk,
+sntrup761_encap (const uint8_t *pk, uint8_t *k, uint8_t *c,
 		 void *random_ctx, nettle_random_func * random)
 {
   sntrup761_R3_t r;
@@ -116,6 +117,6 @@ sntrup761_encap (uint8_t *c, uint8_t *k, const uint8_t *pk,
 
   _sntrup_hash_prefix (cache, 4, SNTRUP761_PUBLIC_KEY_SIZE, pk);
   _sntrup761_short_random (r, random_ctx, random);
-  _sntrup761_encap_internal (c, r_enc, r, pk, cache);
+  _sntrup761_encap_internal (pk, cache, r_enc, c, r);
   _sntrup_hash_session (k, 1, r_enc, c);
 }

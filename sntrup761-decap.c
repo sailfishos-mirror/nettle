@@ -146,7 +146,7 @@ Rounded_decode (sntrup761_Rq_t r, const uint8_t *s)
 
 /* r = ZDecrypt(C,sk) */
 static void
-ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
+ZDecrypt (const uint8_t *sk, sntrup761_R3_t r, const uint8_t *c_enc)
 {
   sntrup761_R3_t f, ginv;
   sntrup761_Rq_t c;
@@ -175,7 +175,7 @@ ZDecrypt (sntrup761_R3_t r, const uint8_t *c_enc, const uint8_t *sk)
 
 /* k = Decap(c,sk) */
 void
-sntrup761_decap (uint8_t *k, const uint8_t *c, const uint8_t *sk)
+sntrup761_decap (const uint8_t *sk, uint8_t *k, const uint8_t *c)
 {
   const uint8_t *pk = sk + 2*SNTRUP761_R3_SIZE;
   const uint8_t *rho = pk + SNTRUP761_PUBLIC_KEY_SIZE;
@@ -186,8 +186,8 @@ sntrup761_decap (uint8_t *k, const uint8_t *c, const uint8_t *sk)
   int mask;
   int i;
 
-  ZDecrypt (r, c, sk);
-  _sntrup761_encap_internal (cnew, r_enc, r, pk, cache);
+  ZDecrypt (sk, r, c);
+  _sntrup761_encap_internal (pk, cache, r_enc, cnew, r);
   mask = memeql_sec(c, cnew, sizeof (cnew)) - 1;
   for (i = 0; i < SNTRUP761_R3_SIZE; i++)
     r_enc[i] ^= mask & (r_enc[i] ^ rho[i]);

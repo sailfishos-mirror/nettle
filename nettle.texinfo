@@ -5946,13 +5946,13 @@ Generate a sntrup761 public key @var{pk} and private key @var{sk}, using
 randomness-generator @var{random} with context @var{random_ctx}.
 @end deftypefun
 
-@deftypefun void sntrup761_encap (uint8_t *@var{c}, uint8_t *@var{k}, const uint8_t *@var{pk}, void *@var{random_ctx}, nettle_random_func *@var{random});
+@deftypefun void sntrup761_encap (const uint8_t *@var{pk}, uint8_t *@var{k}, uint8_t *@var{c}, void *@var{random_ctx}, nettle_random_func *@var{random});
 Generate a session key @var{k} and encapsulate it into ciphertext
 @var{c} for the recipient with public-key @var{pk}, using
 randomness-generator @var{random} with context @var{random_ctx}.
 @end deftypefun
 
-@deftypefun void sntrup761_decap (uint8_t *@var{k}, const uint8_t *@var{c}, const uint8_t *@var{sk});
+@deftypefun void sntrup761_decap (const uint8_t *@var{sk}, uint8_t *@var{k}, const uint8_t *@var{c});
 Decapsulate session key @var{k} from ciphertext @var{c} using the
 private key @var{sk}.
 @end deftypefun
