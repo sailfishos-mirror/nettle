@@ -43,12 +43,13 @@
 #endif
 
 #include <assert.h>
+#include <string.h>
 
 #include "sntrup.h"
 #include "sntrup-internal.h"
 
 static void
-Small_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
+R3_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random)
 {
   int i;
 
@@ -98,7 +99,7 @@ Fq_recip (int16_t a)
   return x;
 }
 
-/* returns 0 if recip succeeded; else -1 */
+/* returns 1 if recip succeeded; else 0 */
 static int
 R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
 {
@@ -175,12 +176,11 @@ R3_recip (sntrup761_R3_t out, const sntrup761_R3_t in)
   for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = _sntrup_mod_3 (sign * v[SNTRUP761_P - 1 - i]);
 
-  return uint16_nonzero_mask (delta);
+  return delta == 0;
 }
 
 /* out = 1/(3*in) in Rq */
-/* returns 0 if recip succeeded; else -1 */
-static int
+static void
 Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
 {
   int16_t f[SNTRUP761_P + 1], g[SNTRUP761_P + 1], v[SNTRUP761_P + 1], r[SNTRUP761_P + 1];
@@ -239,7 +239,8 @@ Rq_recip3 (sntrup761_Rq_t out, const sntrup761_R3_t in)
   for (i = 0; i < SNTRUP761_P; ++i)
     out[i] = _sntrup761_mod_q (scale * (int32_t) v[SNTRUP761_P - 1 - i]);
 
-  return uint16_nonzero_mask (delta);
+  /* Since R/q is a field and input is always non-zero. */
+  assert_maybe (delta == 0);
 }
 
 static void
@@ -253,7 +254,7 @@ Rq_encode (uint8_t *s, const sntrup761_Rq_t r)
   _sntrup_encode (_sntrup761_encoding_Rq, s, R);
 }
 
-/* h,(f,ginv) = KeyGen() */
+/* Returns public polynomial h, private polynomials f, ginv. */
 static void
 KeyGen (sntrup761_Rq_t h, sntrup761_R3_t f, sntrup761_R3_t ginv,
 	void *random_ctx, nettle_random_func * random)
@@ -263,19 +264,18 @@ KeyGen (sntrup761_Rq_t h, sntrup761_R3_t f, sntrup761_R3_t ginv,
 
   for (;;)
     {
-      Small_random (g, random_ctx, random);
-      if (R3_recip (ginv, g) == 0)
+      R3_random (g, random_ctx, random);
+      if (R3_recip (ginv, g))
 	break;
     }
   _sntrup761_short_random (f, random_ctx, random);
-  Rq_recip3 (finv, f);		/* always works */
+  Rq_recip3 (finv, f);
   _sntrup761_Rq_mult_small (h, finv, g);
 }
 
-/* pk,sk = ZKeyGen() */
-static void
-ZKeyGen (uint8_t *pk, uint8_t *sk, void *random_ctx,
-	 nettle_random_func * random)
+void
+sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
+			    nettle_random_func * random)
 {
   sntrup761_Rq_t h;
   sntrup761_R3_t f, v;
@@ -283,22 +283,13 @@ ZKeyGen (uint8_t *pk, uint8_t *sk, void *random_ctx,
   KeyGen (h, f, v, random_ctx, random);
   Rq_encode (pk, h);
   _sntrup761_small_encode (sk, f);
-  sk += SNTRUP761_R3_SIZE;
-  _sntrup761_small_encode (sk, v);
-}
+  _sntrup761_small_encode (sk + SNTRUP761_R3_SIZE, v);
 
-/* pk,sk = KEM_KeyGen() */
-void
-sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
-			    nettle_random_func * random)
-{
-  int i;
-
-  ZKeyGen (pk, sk, random_ctx, random);
-  sk += 2*SNTRUP761_R3_SIZE;
-  for (i = 0; i < SNTRUP761_PUBLIC_KEY_SIZE; ++i)
-    *sk++ = pk[i];
-  random (random_ctx, SNTRUP761_R3_SIZE, sk);
-  sk += SNTRUP761_R3_SIZE;
-  _sntrup_hash_prefix (sk, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
+  /* Auxiliary data appended to the secret key: public key, random
+     rho, and hash of the public key. */
+  memcpy (sk + 2*SNTRUP761_R3_SIZE, pk, SNTRUP761_PUBLIC_KEY_SIZE);
+  random (random_ctx, SNTRUP761_R3_SIZE,
+	  sk + 2*SNTRUP761_R3_SIZE + SNTRUP761_PUBLIC_KEY_SIZE);
+  _sntrup_hash_prefix (sk + 3*SNTRUP761_R3_SIZE + SNTRUP761_PUBLIC_KEY_SIZE,
+		       4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
 }
