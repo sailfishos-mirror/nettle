@@ -114,7 +114,7 @@ sntrup761_encap (uint8_t *c, uint8_t *k, const uint8_t *pk,
   uint8_t r_enc[SNTRUP761_R3_SIZE];
   uint8_t cache[SNTRUP_HASH_SIZE];
 
-  _sntrup_hash_prefix (cache, 4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
+  _sntrup_hash_prefix (cache, 4, SNTRUP761_PUBLIC_KEY_SIZE, pk);
   _sntrup761_short_random (r, random_ctx, random);
   _sntrup761_encap_internal (c, r_enc, r, pk, cache);
   _sntrup_hash_session (k, 1, r_enc, c);

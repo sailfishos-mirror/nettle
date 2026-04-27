@@ -351,12 +351,43 @@ hash_digest (struct sha512_ctx *ctx, uint8_t *digest)
 }
 
 void
-_sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen)
+_sntrup_hash_prefix (uint8_t *out, uint8_t b, size_t size, const uint8_t *in)
 {
   struct sha512_ctx ctx;
   hash_init (&ctx, b);
-  hash_update (&ctx, inlen, in);
+  hash_update (&ctx, size, in);
   hash_digest (&ctx, out);
+}
+
+/* ----- session-key hash */
+
+void
+_sntrup_hash_session (uint8_t *k, uint8_t b,
+		      const uint8_t y[SNTRUP761_R3_SIZE],
+		      const uint8_t z[SNTRUP761_CIPHER_SIZE])
+{
+  struct sha512_ctx ctx;
+  uint8_t x[SNTRUP_HASH_SIZE];
+
+  _sntrup_hash_prefix (x, 3, SNTRUP761_R3_SIZE, y);
+  hash_init (&ctx, b);
+  hash_update (&ctx, sizeof (x), x);
+  hash_update (&ctx, SNTRUP761_CIPHER_SIZE, z);
+  hash_digest (&ctx, k);
+}
+
+void
+_sntrup_hash_confirm (uint8_t *h, const uint8_t r[SNTRUP761_R3_SIZE],
+		      const uint8_t cache[SNTRUP_HASH_SIZE])
+{
+  struct sha512_ctx ctx;
+  uint8_t x[SNTRUP_HASH_SIZE];
+
+  _sntrup_hash_prefix (x, 3, SNTRUP761_R3_SIZE, r);
+  hash_init (&ctx, 2);
+  hash_update (&ctx, sizeof (x), x);
+  hash_update (&ctx, SNTRUP_HASH_SIZE, cache);
+  hash_digest (&ctx, h);
 }
 
 /* ----- randomness */
@@ -412,35 +443,4 @@ _sntrup761_small_encode (uint8_t *s, const sntrup761_R3_t f)
       *s++ = x;
     }
   *s = *p + 1;
-}
-
-void
-_sntrup_hash_confirm (uint8_t *h, const uint8_t *r,
-		      const uint8_t *cache)
-{
-  struct sha512_ctx ctx;
-  uint8_t x[SNTRUP_HASH_SIZE];
-
-  _sntrup_hash_prefix (x, 3, r, SNTRUP761_R3_SIZE);
-  hash_init (&ctx, 2);
-  hash_update (&ctx, sizeof (x), x);
-  hash_update (&ctx, SNTRUP_HASH_SIZE, cache);
-  hash_digest (&ctx, h);
-}
-
-/* ----- session-key hash */
-
-/* k = HashSession(b,y,z) */
-void
-_sntrup_hash_session (uint8_t *k, uint8_t b, const uint8_t *y,
-		      const uint8_t *z)
-{
-  struct sha512_ctx ctx;
-  uint8_t x[SNTRUP_HASH_SIZE];
-
-  _sntrup_hash_prefix (x, 3, y, SNTRUP761_R3_SIZE);
-  hash_init (&ctx, b);
-  hash_update (&ctx, sizeof (x), x);
-  hash_update (&ctx, SNTRUP761_CIPHER_SIZE, z);
-  hash_digest (&ctx, k);
 }

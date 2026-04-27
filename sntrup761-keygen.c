@@ -291,5 +291,5 @@ sntrup761_generate_keypair (uint8_t *pk, uint8_t *sk, void *random_ctx,
   random (random_ctx, SNTRUP761_R3_SIZE,
 	  sk + 2*SNTRUP761_R3_SIZE + SNTRUP761_PUBLIC_KEY_SIZE);
   _sntrup_hash_prefix (sk + 3*SNTRUP761_R3_SIZE + SNTRUP761_PUBLIC_KEY_SIZE,
-		       4, pk, SNTRUP761_PUBLIC_KEY_SIZE);
+		       4, SNTRUP761_PUBLIC_KEY_SIZE, pk);
 }

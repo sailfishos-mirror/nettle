@@ -70,6 +70,12 @@
 
 #define SNTRUP_HASH_SIZE 32
 
+/* Octet size of an encoded R3 polynomial, 191. */
+#define SNTRUP761_R3_SIZE ((SNTRUP761_P+3)/4)
+
+/* Octet size of an encoded rounded polynomial, 1007. */
+#define SNTRUP761_ROUNDED_SIZE (SNTRUP761_CIPHER_SIZE - SNTRUP_HASH_SIZE)
+
 #if WITH_EXTRA_ASSERTS
 # define assert_maybe(x) assert(x)
 #else
@@ -91,16 +97,18 @@ uint16_nonzero_mask (uint16_t x)
 }
 
 void
-_sntrup_hash_prefix (uint8_t *out, uint8_t b, const uint8_t *in, int inlen);
+_sntrup_hash_prefix (uint8_t *out, uint8_t b, size_t size, const uint8_t *in);
 
+/* k = HashSession(b,y,z) */
 void
-_sntrup_hash_session (uint8_t *k, uint8_t b, const uint8_t *y,
-		      const uint8_t *z);
+_sntrup_hash_session (uint8_t *k, uint8_t b,
+		      const uint8_t y[SNTRUP761_R3_SIZE],
+		      const uint8_t z[SNTRUP761_CIPHER_SIZE]);
 
 /* h = HashConfirm(r,pk,cache); cache is Hash4(pk) */
 void
-_sntrup_hash_confirm (uint8_t *h, const uint8_t *r,
-		      const uint8_t *cache);
+_sntrup_hash_confirm (uint8_t *h, const uint8_t r[SNTRUP761_R3_SIZE],
+		      const uint8_t cache[SNTRUP_HASH_SIZE]);
 
 uint32_t
 _sntrup_urandom32 (void *random_ctx, nettle_random_func * random);
@@ -144,12 +152,6 @@ typedef int8_t sntrup761_R3_t[SNTRUP761_P];
 
 /* Coefficients mod q, represented as -(q-1)/2, ... , (q-1)/2. */
 typedef int16_t sntrup761_Rq_t[SNTRUP761_P];
-
-/* Octet size of an encoded R3 polynomial, 191. */
-#define SNTRUP761_R3_SIZE ((SNTRUP761_P+3)/4)
-
-/* Octet size of an encoded rounded polynomial, 1007. */
-#define SNTRUP761_ROUNDED_SIZE (SNTRUP761_CIPHER_SIZE - SNTRUP_HASH_SIZE)
 
 void
 _sntrup761_short_random (sntrup761_R3_t out, void *random_ctx, nettle_random_func * random);
