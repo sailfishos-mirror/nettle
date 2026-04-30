@@ -1,3 +1,14 @@
+2026-04-30  Niels Möller  <nisse@lysator.liu.se>
+
+	* sexp.c: Fix bugs reported by Sebastián Alba Vives.
+	(sexp_iterator_init): Fix truncation bug, by using size_t
+	for the length argument.
+	(sexp_iterator_simple): Check for arithmetic overflow when parsing
+	the decimal length field, and compare length to available input
+	only once.
+	* testsuite/sexp-test.c (test_main): Add tests for truncated
+	strings, including a test triggering 64-bit arithmetic overflow.
+
 2026-04-03  Niels Möller  <nisse@lysator.liu.se>
 
 	* drbg-ctr-aes256.c (drbg_ctr_aes256_init): Use const for

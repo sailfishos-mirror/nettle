@@ -33,6 +33,20 @@ test_main(void)
   ASSERT(sexp_iterator_get_uint32(&i, &x) && x == 0x80);
   ASSERT(sexp_iterator_get_uint32(&i, &x) && x == 0xaabbccdd);
 
+  /* Valid and truncated items. */
+  ASSERT(sexp_iterator_first(&i, LDATA("3:foo")));
+  ASSERT(i.type == SEXP_ATOM
+	 && !i.display_length && !i.display
+	 && i.atom_length == 3 && MEMEQ(3, "foo", i.atom)
+	 && sexp_iterator_next(&i) && i.type == SEXP_END);
+
+  /* Truncated. */
+  ASSERT(!sexp_iterator_first(&i, LDATA("3")));
+  ASSERT(!sexp_iterator_first(&i, LDATA("3:")));
+  ASSERT(!sexp_iterator_first(&i, LDATA("4:foo")));
+  /* Potentially overflowing, length = 2^64. */
+  ASSERT(!sexp_iterator_first(&i, LDATA("18446744073709551616:foo")));
+
   ASSERT(sexp_iterator_first(&i, LDATA("3:foo0:[3:bar]12:xxxxxxxxxxxx")));
   ASSERT(i.type == SEXP_ATOM
 	 && !i.display_length && !i.display

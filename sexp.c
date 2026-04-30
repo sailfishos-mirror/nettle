@@ -47,7 +47,7 @@
  * first element. */
 static void
 sexp_iterator_init(struct sexp_iterator *iterator,
-		   unsigned length, const uint8_t *input)
+		   size_t length, const uint8_t *input)
 {
   iterator->length = length;
   iterator->buffer = input;
@@ -68,7 +68,7 @@ sexp_iterator_simple(struct sexp_iterator *iterator,
 		     size_t *size,
 		     const uint8_t **string)
 {
-  unsigned length = 0;
+  size_t length = 0;
   uint8_t c;
   
   if (EMPTY(iterator)) return 0;
@@ -78,9 +78,14 @@ sexp_iterator_simple(struct sexp_iterator *iterator,
   if (c >= '1' && c <= '9')
     do
       {
-	length = length * 10 + (c - '0');
-	/* >= to account for ':' character */
-	if (length >= (iterator->length - iterator->pos))
+	unsigned digit = c - '0';
+	if (length > (~(size_t) 0) / 10)
+	  /* Multiply by 10 would overflow. */
+	  return 0;
+
+	length = length * 10 + digit;
+	if (length < digit)
+	  /* Overflow from addition. */
 	  return 0;
 
 	if (EMPTY(iterator)) return 0;
@@ -95,6 +100,9 @@ sexp_iterator_simple(struct sexp_iterator *iterator,
     return 0;
 
   if (c != ':')
+    return 0;
+
+  if (length > (iterator->length - iterator->pos))
     return 0;
 
   *size = length;
