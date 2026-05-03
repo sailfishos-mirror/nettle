@@ -35,6 +35,7 @@
 #include "sntrup-internal.h"
 
 #include "drbg-ctr.h"
+#include "macros.h"
 
 static void
 random_undefined (struct drbg_ctr_aes256_ctx *ctx, size_t size, uint8_t *dst)
@@ -106,10 +107,13 @@ static void
 test_randomized (void)
 {
   struct drbg_ctr_aes256_ctx rng_ctx;
-  static const uint8_t seed[DRBG_CTR_AES256_SEED_SIZE] = { 17 };
+  uint8_t drbg_seed[DRBG_CTR_AES256_SEED_SIZE];
   unsigned count;
   unsigned end_count = test_side_channel ? 3 : 100;
-  drbg_ctr_aes256_init (&rng_ctx, seed);
+  uint64_t seed = test_get_seed ();
+  WRITE_UINT64 (drbg_seed, seed);
+  memset (drbg_seed + 8, 0, DRBG_CTR_AES256_SEED_SIZE - 8);
+  drbg_ctr_aes256_init (&rng_ctx, drbg_seed);
 
   for (count = 0; count < end_count; count++)
     {
@@ -154,7 +158,6 @@ test_randomized (void)
 	  printf ("sntrup761 failed with modified ciphertext, test %u\n", count);
 	  abort ();
 	}
-
     }
 }
 
