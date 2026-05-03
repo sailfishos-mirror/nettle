@@ -82,6 +82,9 @@ mark_bytes_undefined (size_t size, const void *p);
 void
 mark_bytes_defined (size_t size, const void *p);
 
+uint64_t
+test_get_seed (void);
+
 /* The main program */
 void
 test_main(void);
@@ -210,20 +213,16 @@ test_mac(const struct nettle_mac *mac,
 #if NETTLE_USE_MINI_GMP
 typedef struct knuth_lfib_ctx gmp_randstate_t[1];
 
-void gmp_randinit_default (struct knuth_lfib_ctx *ctx);
 #define gmp_randclear(state)
 void mpz_urandomb (mpz_t r, struct knuth_lfib_ctx *ctx, mp_bitcnt_t bits);
 void mpz_urandomm (mpz_t r, struct knuth_lfib_ctx *ctx, const mpz_t n);
 /* This is cheating */
 #define mpz_rrandomb mpz_urandomb
 #define mpz_rrandomm mpz_urandomm
-static inline int
-test_randomize (gmp_randstate_t rands UNUSED) { return 0; }
-#else /* !NETTLE_USE_MINI_GMP */
-int
-test_randomize (gmp_randstate_t rands);
+#endif /* NETTLE_USE_MINI_GMP */
 
-#endif /* !NETTLE_USE_MINI_GMP */
+void
+test_randinit (gmp_randstate_t rands);
 
 void
 mpn_out_str (FILE *f, int base, const mp_limb_t *xp, mp_size_t xn);

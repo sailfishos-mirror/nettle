@@ -7,8 +7,7 @@ test_main (void)
   mpz_t r;
   unsigned i;
 
-  gmp_randinit_default (rands);
-  test_randomize(rands);
+  test_randinit (rands);
 
   mpz_init (r);
 

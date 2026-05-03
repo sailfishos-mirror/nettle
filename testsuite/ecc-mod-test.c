@@ -217,8 +217,6 @@ test_main (void)
   gmp_randstate_t rands;
   unsigned i;
 
-  gmp_randinit_default (rands);
-
   test_fixed ();
 
   for (i = 0; ecc_curves[i]; i++)
@@ -227,7 +225,7 @@ test_main (void)
       test_patterns ("q", &ecc_curves[i]->p);
     }
 
-  test_randomize(rands);
+  test_randinit (rands);
 
   for (i = 0; ecc_curves[i]; i++)
     {

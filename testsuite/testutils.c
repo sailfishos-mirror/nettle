@@ -11,6 +11,7 @@
 #include "nettle-internal.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <errno.h>
 #include <ctype.h>
 #include <sys/time.h>
@@ -174,6 +175,53 @@ mark_bytes_undefined (size_t size UNUSED, const void *p UNUSED) {}
 void
 mark_bytes_defined (size_t size UNUSED, const void *p UNUSED) {}
 #endif
+
+static uint64_t
+test_random_seed (void)
+{
+  struct timeval tv;
+  FILE *f = fopen ("/dev/urandom", "rb");
+  if (f)
+    {
+      uint64_t seed;
+      size_t res;
+
+      setbuf (f, NULL);
+      res = fread (&seed, sizeof(seed), 1, f);
+      fclose(f);
+      if (res == 1)
+	return seed;
+
+      fprintf (stderr, "Read of /dev/urandom failed: %s\n",
+	       strerror (errno));
+    }
+  gettimeofday (&tv, NULL);
+  return (uint64_t) tv.tv_sec * 10000000 + tv.tv_usec;
+}
+
+uint64_t
+test_get_seed (void)
+{
+  const char *nettle_test_seed;
+
+  nettle_test_seed = getenv ("NETTLE_TEST_SEED");
+  if (nettle_test_seed && *nettle_test_seed)
+    {
+      char *endp;
+      uint64_t seed = strtoull (nettle_test_seed, &endp, 10);
+      if (*endp)
+	die ("Invalid $NETTLE_TEST_SEED value.\n");
+
+      if (seed == 0)
+	{
+	  seed = test_random_seed ();
+	  fprintf (stderr, "Using NETTLE_TEST_SEED=%" PRIu64 "\n", seed);
+	}
+      return seed;
+    }
+  else
+    return UINT64_C(0x15c0a3c132cefe24);
+}
 
 int
 main(int argc, char **argv)
@@ -1379,11 +1427,6 @@ mpn_out_str (FILE *f, int base, const mp_limb_t *xp, mp_size_t xn)
 
 #if NETTLE_USE_MINI_GMP
 void
-gmp_randinit_default (struct knuth_lfib_ctx *ctx)
-{
-  knuth_lfib_init (ctx, 17);
-}
-void
 mpz_urandomb (mpz_t r, struct knuth_lfib_ctx *ctx, mp_bitcnt_t bits)
 {
   size_t bytes = (bits+7)/8;
@@ -1401,61 +1444,27 @@ mpz_urandomm (mpz_t r, struct knuth_lfib_ctx *ctx, const mpz_t n)
   mpz_urandomb(r, ctx, mpz_sizeinbase(n, 2) + 30);
   mpz_mod(r, r, n);
 }
-#else /* !NETTLE_USE_MINI_GMP */
-static void
-get_random_seed(mpz_t seed)
-{
-  struct timeval tv;
-  FILE *f;
-  f = fopen ("/dev/urandom", "rb");
-  if (f)
-    {
-      uint8_t buf[8];
-      size_t res;
 
-      setbuf (f, NULL);
-      res = fread (&buf, sizeof(buf), 1, f);
-      fclose(f);
-      if (res == 1)
-	{
-	  nettle_mpz_set_str_256_u (seed, sizeof(buf), buf);
-	  return;
-	}
-      fprintf (stderr, "Read of /dev/urandom failed: %s\n",
-	       strerror (errno));
-    }
-  gettimeofday(&tv, NULL);
-  mpz_set_ui (seed, tv.tv_sec);
-  mpz_mul_ui (seed, seed, 1000000UL);
-  mpz_add_ui (seed, seed, tv.tv_usec);
+void
+test_randinit(gmp_randstate_t rands)
+{
+  knuth_lfib_init (rands, 17);
 }
 
-int
-test_randomize(gmp_randstate_t rands)
+#else /* !NETTLE_USE_MINI_GMP */
+
+void
+test_randinit(gmp_randstate_t rands)
 {
-  const char *nettle_test_seed;
+  uint64_t seed = test_get_seed ();
+  mpz_t seed_z;
 
-  nettle_test_seed = getenv ("NETTLE_TEST_SEED");
-  if (nettle_test_seed && *nettle_test_seed)
-    {
-      mpz_t seed;
-      mpz_init (seed);
-      if (mpz_set_str (seed, nettle_test_seed, 0) < 0
-	  || mpz_sgn (seed) < 0)
-	die ("Invalid NETTLE_TEST_SEED: %s\n",
-	     nettle_test_seed);
-      if (mpz_sgn (seed) == 0)
-	get_random_seed (seed);
-      fprintf (stderr, "Using NETTLE_TEST_SEED=");
-      mpz_out_str (stderr, 10, seed);
-      fprintf (stderr, "\n");
+  mpz_init (seed_z);
+  mpz_import (seed_z, 1, 1, sizeof (seed), 0, 0, &seed);
+  gmp_randinit_default (rands);
+  gmp_randseed (rands, seed_z);
 
-      gmp_randseed (rands, seed);
-      mpz_clear (seed);
-      return 1;
-    }
-  else 
-    return 0;
+  mpz_clear (seed_z);
 }
 #endif /* !NETTLE_USE_MINI_GMP */
 

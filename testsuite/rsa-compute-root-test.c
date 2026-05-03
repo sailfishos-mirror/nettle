@@ -151,8 +151,7 @@ test_main (void)
   rsa_public_key_init(&pub);
   mpz_init (plaintext);
 
-  gmp_randinit_default (rands);
-  test_randomize(rands);
+  test_randinit (rands);
 
   for (j = 0; j < KEY_COUNT; j++)
     {

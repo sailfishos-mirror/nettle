@@ -145,9 +145,7 @@ test_main (void)
   gmp_randstate_t rands;
   unsigned i;
 
-  gmp_randinit_default (rands);
-
-  test_randomize(rands);
+  test_randinit (rands);
 
   for (i = 0; ecc_curves[i]; i++)
     {

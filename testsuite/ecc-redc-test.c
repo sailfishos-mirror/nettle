@@ -50,8 +50,7 @@ test_main (void)
   unsigned i;
   mpz_t r;
 
-  gmp_randinit_default (rands);
-  test_randomize(rands);
+  test_randinit (rands);
   
   mpz_init (r);
   

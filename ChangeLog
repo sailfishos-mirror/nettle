@@ -1,3 +1,11 @@
+2026-05-03  Niels Möller  <nisse@lysator.liu.se>
+
+	* testsuite/testutils.c (test_random_seed, test_get_seed): New functions.
+	(get_random_seed): Deleted, replaced by test_random_seed.
+	(test_randinit): New function, using gmp_randinit_default and
+	test_random_seed. Replaces...
+	(test_randomize): ... deleted function. Updated all callers.
+
 2026-04-30  Niels Möller  <nisse@lysator.liu.se>
 
 	* sexp.c: Fix bugs reported by Sebastián Alba Vives.
