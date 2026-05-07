@@ -30,6 +30,17 @@
 	(TS_SC_HOGWEED): Add sc-sntrup761-test.
 	(DISTFILES): Add sntrup761 reference files.
 
+	* examples/hogweed-benchmark.c (struct alg): Renamed, to...
+	(struct sign_alg): ... new name.
+	(alg_list): Renamed list, to...
+	(sign_alg_list): ... new name. Also declare as static const.
+	(struct kem_alg, struct sntrup_ctx): New structs.
+	(bench_kem_alg, bench_sntrup_init, bench_sntrup_keygen)
+	(bench_sntrup_encrypt, bench_sntrup_decrypt, bench_sntrup_clear):
+	New functions.
+	(kem_alg_list): New algorithm list.
+	(main): Benchmark both signature and kem algorithms.
+
 2026-05-03  Niels Möller  <nisse@lysator.liu.se>
 
 	* testsuite/testutils.c (test_random_seed, test_get_seed): New functions.
