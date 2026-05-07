@@ -181,7 +181,8 @@ nettle_SOURCES = aes-decrypt-internal.c aes-decrypt-table.c \
 		 slh-shake.c slh-sha256.c \
 		 slh-fors.c slh-merkle.c slh-wots.c slh-xmss.c \
 		 slh-dsa.c slh-dsa-128s.c slh-dsa-128f.c \
-		 slh-dsa-shake-128s.c slh-dsa-shake-128f.c slh-dsa-sha2-128s.c slh-dsa-sha2-128f.c
+		 slh-dsa-shake-128s.c slh-dsa-shake-128f.c slh-dsa-sha2-128s.c slh-dsa-sha2-128f.c \
+		 sntrup761.c sntrup761-keygen.c sntrup761-decap.c sntrup761-encap.c
 
 hogweed_SOURCES = sexp.c sexp-format.c \
 		  sexp-transport.c sexp-transport-format.c \
@@ -259,14 +260,14 @@ HEADERS = aes.h arcfour.h arctwo.h asn1.h blowfish.h balloon.h \
 	  salsa20.h sexp.h serpent.h \
 	  sha1.h sha2.h sha3.h slh-dsa.h sm3.h sm4.h streebog.h twofish.h \
 	  umac.h yarrow.h xts.h poly1305.h nist-keywrap.h \
-	  drbg-ctr.h
+	  drbg-ctr.h sntrup.h
 
 INSTALL_HEADERS = $(HEADERS) version.h @IF_MINI_GMP@ mini-gmp.h
 
 SOURCES = $(nettle_SOURCES) $(hogweed_SOURCES) \
 	  $(getopt_SOURCES) $(internal_SOURCES) \
 	  $(OPT_SOURCES) \
-	  aesdata.c desdata.c twofishdata.c shadata.c eccdata.c
+	  aesdata.c desdata.c twofishdata.c shadata.c eccdata.c sntrupdata.c
 
 # NOTE: This list must include all source files, with no duplicates,
 # independently of which source files are included in the build.
@@ -290,7 +291,7 @@ DISTFILES = $(SOURCES) $(HEADERS) getopt.h \
 	ctr-internal.h chacha-internal.h hmac-internal.h sha3-internal.h \
 	salsa20-internal.h umac-internal.h hogweed-internal.h \
 	rsa-internal.h pkcs1-internal.h dsa-internal.h eddsa-internal.h \
-	slh-dsa-internal.h \
+	slh-dsa-internal.h sntrup-internal.h sntrup761-encoding.h \
 	gmp-glue.h ecc-internal.h fat-setup.h oaep.h \
 	mini-gmp.h asm.m4 m4-utils.m4 \
 	nettle.texinfo nettle.info nettle.html nettle.pdf sha-example.c
@@ -451,6 +452,12 @@ ecc-secp224r1.$(OBJEXT): ecc-secp224r1.h
 ecc-secp256r1.$(OBJEXT): ecc-secp256r1.h
 ecc-secp384r1.$(OBJEXT): ecc-secp384r1.h
 ecc-secp521r1.$(OBJEXT): ecc-secp521r1.h
+
+sntrup761-encoding.h: sntrupdata.c
+	$(MAKE) sntrupdata$(EXEEXT_FOR_BUILD)
+	./sntrupdata$(EXEEXT_FOR_BUILD) > $(srcdir)/$(@F)T && mv $(srcdir)/$(@F)T $(srcdir)/$(@F)
+
+sntrup761.$(OBJEXT): sntrup761-encoding.h
 
 # Texinfo rules
 %.info: %.texinfo

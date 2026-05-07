@@ -1,3 +1,23 @@
+2026-05-07  Niels Möller  <nisse@lysator.liu.se>
+
+	Add support for sntrup761.
+	* sntrup.h: Declare public sntrup761 functions.
+	(SNTRUP761_PRIVATE_KEY_SIZE, SNTRUP761_PUBLIC_KEY_SIZE)
+	(SNTRUP761_CIPHER_SIZE, SNTRUP_SESSION_KEY_SIZE): New constants.
+	* sntrup761-decap.c (sntrup761_decap): New function.
+	* sntrup761-encap.c (sntrup761_encap): New function.
+	* sntrup761-keygen.c (sntrup761_generate_keypair): New function.
+	* sntrup-internal.h: New header with internal declarations.
+	* sntrup761.c: New file, with shared sntrup internals.
+	* sntrupdata.c: New program, for generating sntrup encoding tables.
+	* Makefile.in (nettle_SOURCES): Add sntrup761.c,
+	sntrup761-keygen.c, sntrup761-decap.c, and sntrup761-encap.c.
+	(HEADERS): Add sntrup.h.
+	(SOURCES): Add sntrupdata.c.
+	(DISTFILES): Add sntrup-internal.h and sntrup761-encoding.h.
+	(sntrup761-encoding.h): Add make targets to generate this file by
+	compiling and running sntrupdata.c.
+
 2026-05-03  Niels Möller  <nisse@lysator.liu.se>
 
 	* testsuite/testutils.c (test_random_seed, test_get_seed): New functions.
