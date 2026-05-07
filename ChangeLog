@@ -18,6 +18,18 @@
 	(sntrup761-encoding.h): Add make targets to generate this file by
 	compiling and running sntrupdata.c.
 
+	* testsuite/sntrup761-test.c: New test case.
+	* testsuite/sc-sntrup761-test: New test case.
+	* testsuite/sntrup761-tc0.ct: New reference cipher text.
+	* testsuite/sntrup761-tc0.pk: New reference public key.
+	* testsuite/sntrup761-tc0.sk: New reference secret key.
+	* testsuite/sntrup761-tc1.ct: Likewise.
+	* testsuite/sntrup761-tc1.pk: Likewise.
+	* testsuite/sntrup761-tc1.sk: Likewise.
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Add sntrup761-test.c.
+	(TS_SC_HOGWEED): Add sc-sntrup761-test.
+	(DISTFILES): Add sntrup761 reference files.
+
 2026-05-03  Niels Möller  <nisse@lysator.liu.se>
 
 	* testsuite/testutils.c (test_random_seed, test_get_seed): New functions.
@@ -408,7 +420,7 @@
 	* Makefile.in (nettle_SOURCES): Add slh-dsa-shake-128f.c.
 
 	* testsuite/slh-dsa-test.c (test_main): Add test for slh-dsa-shake-128f.
-	* testsuite/slh-dsa-shake-128f.ref: New Reference signature.
+	* testsuite/slh-dsa-shake-128f.ref: New reference signature.
 	* testsuite/Makefile.in (DISTFILES): Add slh-dsa-shake-128f.ref.
 
 	* examples/hogweed-benchmark.c (bench_slh_dsa_sign): New function.
