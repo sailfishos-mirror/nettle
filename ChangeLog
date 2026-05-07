@@ -41,6 +41,9 @@
 	(kem_alg_list): New algorithm list.
 	(main): Benchmark both signature and kem algorithms.
 
+	* nettle.texinfo (Key-Encapsulation mechanisms): Document
+	sntrup761.
+
 2026-05-03  Niels Möller  <nisse@lysator.liu.se>
 
 	* testsuite/testutils.c (test_random_seed, test_get_seed): New functions.
