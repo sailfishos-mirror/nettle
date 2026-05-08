@@ -1,3 +1,18 @@
+NEWS for the Nettle 4.1 release
+
+	Bug fixes:
+
+	* Fix type truncation and arithmetic overflow issues in the
+	  sexp parser. Reported by Sebastián Alba Vives.
+
+	* Use const for the seed input argument to
+	  drbg_ctr_aes256_init.
+
+	New features:
+
+	* Support for the Streamlined NTRU Prime key encapsulation
+	  mechanism, sntrup761. See the Nettle manual for details.
+
 NEWS for the Nettle 4.0 release
 
 	This is a new major release. It includes one new feature,
