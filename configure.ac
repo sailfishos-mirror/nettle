@@ -215,7 +215,7 @@ if test "x$nettle_cv_c_builtin_bswap64" = "xyes" ; then
   AC_DEFINE(HAVE_BUILTIN_BSWAP64)
 fi
 
-LSH_GCC_ATTRIBUTES
+NETTLE_C_ATTRIBUTES
 
 # Check for file locking. We (AC_PROG_CC?) have already checked for
 # sys/types.h and unistd.h.

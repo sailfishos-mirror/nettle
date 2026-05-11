@@ -68,15 +68,6 @@
      time.
 */
 
-#if HAVE_GCC_ATTRIBUTE
-# define CONSTRUCTOR __attribute__ ((constructor))
-#else
-# define CONSTRUCTOR
-# if defined (__sun)
-#  pragma init(fat_init)
-# endif
-#endif
-
 /* Disable use of ifunc for now. Problem is, there's no guarantee that
    one can call any libc functions from the ifunc resolver. On x86 and
    x86_64, the corresponding IRELATIVE relocs are supposed to be

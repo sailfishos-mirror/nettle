@@ -1,3 +1,17 @@
+2026-05-11  Niels Möller  <nisse@lysator.liu.se>
+
+	* aclocal.m4 (LSH_GCC_ATTRIBUTES): Delete macro, based on
+	AC_COMPILE_IF_ELSE, and cpnfig.h define HAVE_GCC_ATTRIBUTE.
+	Replaced by...
+	(NETTLE_C_ATTRIBUTES): Simpler macro, just adding code to config.h
+	to define CONSTRUCTOR, NORETURN, PRINTF_STYLE and UNUSED, when
+	corresponding attributes are supported according to
+	__has_attribute. The __has_attribute test was introduced in clang
+	and gcc a decade ago.
+	* configure.ac: Use NETTLE_C_ATTRIBUTES.
+	* fat-setup.h: Remove local definition of CONSTRUCTOR. Also drop
+	support for using #pragma init(...) with Sun compilers.
+
 2026-05-07  Niels Möller  <nisse@lysator.liu.se>
 
 	Add support for sntrup761.
