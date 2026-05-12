@@ -1,7 +1,13 @@
+2026-05-12  Niels Möller  <nisse@lysator.liu.se>
+
+	* nettle-types.h (_NETTLE_ATTRIBUTE_PURE): Change preprocessor
+	conditionals to use __has_attribute.
+	(_NETTLE_ATTRIBUTE_DEPRECATED): Deleted, no longer used.
+
 2026-05-11  Niels Möller  <nisse@lysator.liu.se>
 
 	* aclocal.m4 (LSH_GCC_ATTRIBUTES): Delete macro, based on
-	AC_COMPILE_IF_ELSE, and cpnfig.h define HAVE_GCC_ATTRIBUTE.
+	AC_COMPILE_IF_ELSE, and config.h define HAVE_GCC_ATTRIBUTE.
 	Replaced by...
 	(NETTLE_C_ATTRIBUTES): Simpler macro, just adding code to config.h
 	to define CONSTRUCTOR, NORETURN, PRINTF_STYLE and UNUSED, when
