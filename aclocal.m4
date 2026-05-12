@@ -49,6 +49,11 @@ AC_DEFUN([NETTLE_C_ATTRIBUTES],
 # else
 #  define CONSTRUCTOR
 # endif
+# if __has_attribute (__nonstring__)
+#  define NONSTRING __attribute__ ((__nonstring__))
+# else
+#  define NONSTRING
+# endif
 # if __has_attribute (__noreturn__)
 #  define NORETURN __attribute__ ((__noreturn__))
 # else
@@ -66,6 +71,7 @@ AC_DEFUN([NETTLE_C_ATTRIBUTES],
 # endif
 #else /* !_has_attribute */
 # define CONSTRUCTOR
+# define NONSTRING
 # define NORETURN
 # define PRINTF_STYLE(f, a)
 # define UNUSED

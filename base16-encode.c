@@ -39,7 +39,7 @@
 
 
 static const uint8_t
-hex_digits[16] = "0123456789abcdef";
+hex_digits[16] NONSTRING = "0123456789abcdef";
 
 #define DIGIT(x) (hex_digits[(x) & 0xf])
 

@@ -1,5 +1,13 @@
 2026-05-12  Niels Möller  <nisse@lysator.liu.se>
 
+	Avoid gcc-15 warnings on missing NUL terminators. Based on patch
+	by Georg Sauthoff:
+	* aclocal.m4 (NETTLE_C_ATTRIBUTES): Define NONSTRING attribute.
+	* base16-encode.c (hex_digits): Declare as NONSTRING.
+	* base64-encode.c (base64_encode_table): Likewise.
+	* blowfish-bcrypt.c (radix64_encode_table): Likewise.
+	* tools/pkcs1-conv.c (pem_start_pattern, pem_end_pattern, pem_trailer_pattern): Likewise.
+
 	* nettle-types.h (_NETTLE_ATTRIBUTE_PURE): Change preprocessor
 	conditionals to use __has_attribute.
 	(_NETTLE_ATTRIBUTE_DEPRECATED): Deleted, no longer used.

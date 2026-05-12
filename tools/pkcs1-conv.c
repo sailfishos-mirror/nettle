@@ -117,13 +117,13 @@ read_file(struct nettle_buffer *buffer, FILE *f)
 }
 
 static const uint8_t
-pem_start_pattern[11] = "-----BEGIN ";
+pem_start_pattern[11] NONSTRING = "-----BEGIN ";
 
 static const uint8_t
-pem_end_pattern[9] = "-----END ";
+pem_end_pattern[9] NONSTRING = "-----END ";
 
 static const uint8_t
-pem_trailer_pattern[5] = "-----";
+pem_trailer_pattern[5] NONSTRING = "-----";
 
 static const char
 pem_ws[33] = {

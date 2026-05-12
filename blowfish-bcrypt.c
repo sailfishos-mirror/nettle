@@ -70,7 +70,7 @@ static const signed char radix64_decode_table[0x100] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-static const char radix64_encode_table[64] =
+static const char radix64_encode_table[64] NONSTRING =
   "./ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
     "0123456789";

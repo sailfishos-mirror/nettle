@@ -83,7 +83,7 @@ encode_raw(const char *alphabet,
   assert(out == dst);
 }
 
-static const char base64_encode_table[64] =
+static const char base64_encode_table[64] NONSTRING =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   "abcdefghijklmnopqrstuvwxyz"
   "0123456789+/";
