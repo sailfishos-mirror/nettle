@@ -1,3 +1,10 @@
+2026-09-21  Niels Möller  <nisse@lysator.liu.se>
+
+	* sntrup761.c (uint32_16_mod): Moved, to...
+	* nettle-internal.h (uint32_16_mod): ...new location, shared
+	between ml-kem and sntrup761.
+	* ml-kem-internal.c (reduce): Rewrite as wrapper around uint32_16_mod.
+
 2026-09-19  Niels Möller  <nisse@lysator.liu.se>
 
 	* ml-kem-internal.c: Declare all the "inner" functions as static.

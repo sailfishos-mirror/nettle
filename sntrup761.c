@@ -146,18 +146,6 @@ uint32_16_divmod (uint16_t *rp, uint32_t u, uint16_t d, uint32_t dinv)
   return q + mask;
 }
 
-static uint16_t
-uint32_16_mod (uint32_t u, uint16_t d, uint32_t dinv)
-{
-  uint32_t q, r, p;
-  q = ((uint64_t) dinv * u) >> 32;
-  p = q * d;
-  r = u - p; /* Interpreted as two's complement, |r| < d */
-  r += ((r >> 16) & d);
-  assert_maybe ((uint16_t) r < d);
-  return r;
-}
-
 void
 _sntrup_decode (unsigned n, const struct sntrup_encoding_step *step,
 		uint16_t *R, const uint8_t *S /* Must point at *end* of input. */)
@@ -261,7 +249,7 @@ _sntrup_mod_3 (int16_t x)
   assert_maybe (x <= SNTRUP761_Q12);
   assert_maybe (x >= -SNTRUP761_Q12);
 
-  /* We want ((x + 1) mod q) - 1, but also add a multiple of 3 so we
+  /* We want ((x + 1) mod 3) - 1, but also add a multiple of 3 so we
      can use unsigned arithmetic. And (q-1)/2 happens to be a multiple
      of 3. */
   ux = x + 1 + SNTRUP761_Q12;

@@ -136,14 +136,8 @@ decompress (uint16_t y, unsigned d)
 static inline uint16_t
 reduce (uint32_t u)
 {
-  uint32_t q, r, p;
   /* Magic constant is ceil(2^32 / Q) */
-  q = ((uint64_t) 1290168 * u) >> 32;
-  p = q * Q;
-  r = u - p; /* Interpreted as two's complement, |r| < d */
-  r += ((r >> 16) & Q);
-  assert_maybe (r < Q);
-  return r;
+  return uint32_16_mod (u, Q, 1290168);
 }
 
 /* Calculate a - b mod Q, where 0 <= a < Q and 0 <= b <= Q */
